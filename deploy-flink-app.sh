@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# These variables can be set also in IntelliJ run configuration
+export FLINK_BIN_PATH="/home/michal/Documents/mgr/flink-1.19.1/bin"
+export RESULTS_DIRECTORY="/home/michal/Documents/mgr/flink-classifiers/results"
+export FLINK_ADDRESS="localhost"
+export FLINK_PORT="8081"
+
 if [ -z "$FLINK_BIN_PATH" ]; then
   echo "FLINK_BIN_PATH env variable not set" >&2
   exit 1
@@ -18,13 +24,20 @@ if [ -z "$FLINK_PORT" ]; then
   export FLINK_PORT="8081"
 fi
 
-if [ "$FLINK_ADDRESS" = "localhost" ]; then ## if flink cluster is not running on cluster start it
-  http_status=$(curl --write-out "%{http_code}" --silent --output /dev/null "http://${FLINK_ADDRESS}:${FLINK_PORT}/taskmanagers")
+#if [ "$FLINK_ADDRESS" = "localhost" ]; then ## if flink cluster is not running on cluster start it
+#  http_status=$(curl --write-out "%{http_code}" --silent --output /dev/null "http://${FLINK_ADDRESS}:${FLINK_PORT}/taskmanagers")
+#
+#  if [ "${http_status}" != "200" ]; then
+#    "${FLINK_BIN_PATH}"/start-cluster.sh
+#  fi
+#fi
 
-  if [ "${http_status}" != "200" ]; then
-    "${FLINK_BIN_PATH}"/start-cluster.sh
-  fi
-fi
+# Always start a new cluster in contrary to what is above.
+# This is a workaround for problem with loading pytorch native library in Task Manager.
+# Pytorch could not be loaded because it was already loaded by some other ClassLoader
+# when run second time on cluster.
+# todo można kiedyś się jeszcze temu przyjrzeć
+${FLINK_BIN_PATH}/start-cluster.sh
 
 jar_dir="./target"
 jar_path=$(ls -t $jar_dir/*.jar | head -n 1 )
@@ -33,8 +46,14 @@ if [ -z "$jar_path" ]; then
   exit 1
 fi
 
+echo "tu doszedłem i żyję, jarpath to będzie $(realpath $jar_path)}"
+
 jar_absolute_path=$(realpath $jar_path)
 
 export EXPERIMENT_ID=$(uuidgen)
 
 "$FLINK_BIN_PATH"/flink run -m "${FLINK_ADDRESS}:${FLINK_PORT}" "$jar_absolute_path" --env EXPERIMENT_ID="$EXPERIMENT_ID" --env RESULTS_DIRECTORY="$RESULTS_DIRECTORY"
+
+#export EXPERIMENT_ID=ea3e596c-5da2-42da-8572-88bd038469ab
+
+${FLINK_BIN_PATH}/stop-cluster.sh

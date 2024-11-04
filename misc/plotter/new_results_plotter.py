@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import results_plotter
-from misc.plotter.ClassifierResults import ClassifierResults
-from misc.plotter.results_plotter import PlotPrinterConfig
+from ClassifierResults import ClassifierResults
+from results_plotter import PlotPrinterConfig
 
 import re
 
@@ -770,7 +770,7 @@ def plotPercentageOfNodesTravelledVsAllNodeTreeCounts(results: list[ClassifierRe
         else:
             plt.figure()
 
-        title = "$n_\\mathrm{nodes\%}$"
+        title = r"$n_\\mathrm{nodes\%}$"
         if prefix:
             title = f"{prefix}: {title}"
         title = f"zbiór {dataset} - {title}"
@@ -785,7 +785,7 @@ def plotPercentageOfNodesTravelledVsAllNodeTreeCounts(results: list[ClassifierRe
                 plt.plot(x, values, label=labelFun(result))
 
         plt.legend()
-        plt.ylabel("$n_\\mathrm{nodes\%}$ [%]")
+        plt.ylabel(r"$n_\\mathrm{nodes\%}$ [%]")
         plt.xlabel("numer próbki")
         if cfg.is_set():
             filename = "nodesDuringTraversalPercentage"
@@ -1186,7 +1186,7 @@ def elecWithDetections():
         printVfdtDefaultPlots(results, dataset, cfg, labelFun, showDetections=True, prefix=prefix)
 
     return PerformPlotting(
-        experimentId="94b6027c-30ee-4597-ab11-25d5e0c7be88",
+        experimentId="936a3ce8-17cd-4c1d-a737-6ba791875964",
         performPlotting=plottingAction,
         description="elecWithDetections"
     )
@@ -1196,11 +1196,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--description", action="store", default=None, required=False,
                         help="Description if plots should be printed as files")
+    parser.add_argument("--plotsDir", action="store", default=None, required=False,
+                        help="Directory for plots to be saved to")
     args = parser.parse_args()
 
-    cfg = results_plotter.PlotPrinterConfig("/home/deikare/wut/mgr-flink/thesis/img/6",
-                                            args.description)
-    saveToFile = False
+    cfg = results_plotter.PlotPrinterConfig(args.plotsDir, args.description)
+    saveToFile = True
     experiment = elecWithDetections()
 
     if saveToFile:
@@ -1208,12 +1209,15 @@ if __name__ == '__main__':
 
     experimentId = experiment.experimentId
     print(f"experimentId: {experimentId}")
-    resultsPath = f"/home/deikare/wut/vfdtResults/{experimentId}"
+    resultsPath = f"/home/michal/Documents/mgr/flink-classifiers/results/{experimentId}"
+    # resultsPath = os.environ["RESULTS_DIRECTORY"]
 
     for dataset in os.listdir(resultsPath):
         datasetPath = f"{resultsPath}/{dataset}"
 
         allResults = []
+        print("resultsPath: " + resultsPath)
+        print("dataset: " + dataset)
 
         for classifierType in os.listdir(datasetPath):
             classifierPath = f"{datasetPath}/{classifierType}"

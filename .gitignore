@@ -90,3 +90,9 @@ nb-configuration.xml
 ## Miscellaneous
 ##############################
 *.log
+
+# Directory with run results
+results
+
+# python venv
+mgr-venv

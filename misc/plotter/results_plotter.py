@@ -2,6 +2,7 @@ import csv
 import json
 import os
 from typing import Callable
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,6 +36,10 @@ def extractParams(classifierDir: str) -> dict[str, float]:
                 valueBeginIdx = i
                 break
 
+        print("classifierDir: " + classifierDir)
+        print("classifierRaw: " + classifierRaw)
+        print("key: " + classifierRaw[:(valueBeginIdx)])
+        print("value: " + classifierRaw[valueBeginIdx:])
         key = classifierRaw[:(valueBeginIdx)]
         value = float(classifierRaw[valueBeginIdx:])
         resultDict[key] = value
@@ -88,11 +93,11 @@ def readData(paths: list[str], headers: list[str]):
 
 def getUnit(measurement: str):
     if "Duration" in measurement or "duration" in measurement:
-        return "$\mu$s"
+        return r"$\mu$s"
     elif measurement == "accuracy":
-        return "%"
+        return r"%"
     elif "%" in measurement:
-        return "%"
+        return r"%"
     else:
         return None
 
@@ -192,6 +197,7 @@ def readAllResults(classifierPath: str):
 
     for classifierParamsRaw in os.listdir(classifierPath):
         classifierParamsPath = f"{classifierPath}/{classifierParamsRaw}"
+        print("classifierPath: " + classifierPath)
 
         classifierParams = extractParams(classifierParamsRaw)
 
@@ -374,6 +380,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
 
             perfTypeReplaced = performanceType.replace("%", "")
 
+            Path(plot_printer_config.get_path()).mkdir(parents=True, exist_ok=True)
             plt.savefig(
                 f"{plot_printer_config.get_path()}/{perfTypeReplaced}_{prefix_formatted}_{subtitle_formatted}_{xlabel_formatted}.png")
     else:
@@ -454,6 +461,7 @@ if __name__ == "__main__":
     experimentId = os.environ["EXPERIMENT_ID"]
     print(f"experimentId: {experimentId}")
     resultsInputDir = os.environ["RESULTS_DIRECTORY"]
+    print(f"resultsInputDir: {resultsInputDir}")
     resultsPath = f"{resultsInputDir}/{experimentId}"
     for dataset in os.listdir(resultsPath):
         datasetPath = f"{resultsPath}/{dataset}"

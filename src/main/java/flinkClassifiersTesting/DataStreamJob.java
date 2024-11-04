@@ -19,11 +19,10 @@
 package flinkClassifiersTesting;
 
 import flinkClassifiersTesting.processors.factory.FlinkProcessFactory;
-import flinkClassifiersTesting.processors.factory.dwm.DwmProcessFactory;
-import flinkClassifiersTesting.processors.factory.dwm.DwmClassifierParams;
-import flinkClassifiersTesting.processors.factory.vfdt.VfdtProcessFactory;
+import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
+import flinkClassifiersTesting.processors.factory.cand.CandProcessFactory;
 import flinkClassifiersTesting.processors.factory.vfdt.VfdtClassifierParams;
-import flinkClassifiersTesting.processors.factory.vfdt.WindowedDetectorVfdtClassifierParams;
+import flinkClassifiersTesting.processors.factory.vfdt.VfdtProcessFactory;
 
 import java.io.File;
 import java.net.URI;
@@ -52,15 +51,18 @@ public class DataStreamJob {
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
         long bootstrapSamplesLimit = 100L;
 
-        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 50));
+        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
         FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdtEntropy(vfdtParams));
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdtEntropy(vfdtParams));
+//
+//        List<WindowedDetectorVfdtClassifierParams> wadVfdtParams = List.of(new WindowedDetectorVfdtClassifierParams(0.2, 0.1, 50, 1000, 0.9, 0.85, 1, 1));
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.bstVfdtWindowedDetector(wadVfdtParams));
+//
+//        List<DwmClassifierParams> dwmParams = List.of(new DwmClassifierParams(0.5, 0.2, 100));
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.extendedDwm(dwmParams));
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.dwm(dwmParams));
 
-        List<WindowedDetectorVfdtClassifierParams> wadVfdtParams = List.of(new WindowedDetectorVfdtClassifierParams(0.2, 0.1, 50, 1000, 0.9, 0.85, 1, 1));
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.bstVfdtWindowedDetector(wadVfdtParams));
-
-        List<DwmClassifierParams> dwmParams = List.of(new DwmClassifierParams(0.5, 0.2, 100));
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.extendedDwm(dwmParams));
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.dwm(dwmParams));
+        List<CandClassifierParams> candParams = List.of(new CandClassifierParams());
+        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
     }
 }
