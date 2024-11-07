@@ -381,6 +381,11 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
             perfTypeReplaced = performanceType.replace("%", "")
 
             Path(plot_printer_config.get_path()).mkdir(parents=True, exist_ok=True)
+
+            # todo możesz mnie potem usunac
+            ax = plt.gca()
+            ax.set_ylim([0, 100])
+
             plt.savefig(
                 f"{plot_printer_config.get_path()}/{perfTypeReplaced}_{prefix_formatted}_{subtitle_formatted}_{xlabel_formatted}.png")
     else:

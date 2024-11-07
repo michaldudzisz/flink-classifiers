@@ -25,6 +25,7 @@ import flinkClassifiersTesting.processors.factory.vfdt.VfdtClassifierParams;
 import flinkClassifiersTesting.processors.factory.vfdt.VfdtProcessFactory;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -51,8 +52,9 @@ public class DataStreamJob {
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
         long bootstrapSamplesLimit = 100L;
 
-        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
+//        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
+
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdtEntropy(vfdtParams));
 //
 //        List<WindowedDetectorVfdtClassifierParams> wadVfdtParams = List.of(new WindowedDetectorVfdtClassifierParams(0.2, 0.1, 50, 1000, 0.9, 0.85, 1, 1));
@@ -62,7 +64,7 @@ public class DataStreamJob {
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.extendedDwm(dwmParams));
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.dwm(dwmParams));
 
-        List<CandClassifierParams> candParams = List.of(new CandClassifierParams());
+        List<CandClassifierParams> candParams = List.of(new CandClassifierParams(CandClassifierParams.PoolSize.P30, 30));
         FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
     }
 }

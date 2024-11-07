@@ -28,6 +28,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.nio.file.StandardOpenOption.CREATE;
+
 public class FlinkProcessFactory {
     public static <T extends ClassifierParamsInterface, C extends BaseClassifier, P extends BaseProcessFunction<C>> void runJobs(String datasetPath, long bootstrapSamplesLimit, ProcessFunctionsFromParametersFactory<T, C, P> processFunctionsFromParametersFactory) throws FileNotFoundException {
         final String classEncoderFilepath = datasetPath.replace(".csv", ".txt");

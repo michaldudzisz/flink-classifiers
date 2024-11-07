@@ -6,7 +6,8 @@ export PYTHON_VENV_NAME=mgr-venv
 source "${PYTHON_VENV_NAME}/bin/activate"
 
 export RESULTS_DIRECTORY="/home/michal/Documents/mgr/flink-classifiers/results"
-export EXPERIMENT_ID=3cda8d69-320b-48ca-a211-5bab024a84fe
+
+export EXPERIMENT_ID=7756264b-f338-4be1-90a9-607f754277a3 # eksperyment na elecu
 
 export PLOTS_DIR="$RESULTS_DIRECTORY/${EXPERIMENT_ID}/plots"
 export DESCRIPTION="dsc"

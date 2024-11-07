@@ -1,5 +1,6 @@
 import flinkClassifiersTesting.classifiers.cand.Cand;
 import flinkClassifiersTesting.inputs.Example;
+import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
 import flinkClassifiersTesting.processors.factory.vfdt.VfdtClassifierParams;
 import org.junit.Test;
 
@@ -9,7 +10,7 @@ public class CandDebugging {
     @Test
     public void candRuns() {
         // given
-        Cand cand = new Cand();
+        Cand cand = new Cand(new CandClassifierParams());
 
         // and
         int mappedClass = 0; // todo 5 nie działa, tylko 0 działa

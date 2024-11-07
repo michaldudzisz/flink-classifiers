@@ -38,17 +38,18 @@ under the License.
 <!--        <djl.version>0.30.0</djl.version>-->
     </properties>
 
-<!--    <dependencyManagement>-->
-<!--        <dependencies>-->
-<!--            <dependency>-->
-<!--                <groupId>ai.djl</groupId>-->
-<!--                <artifactId>bom</artifactId>-->
-<!--                <version>${djl.version}</version>-->
-<!--                <type>pom</type>-->
-<!--                <scope>import</scope>-->
-<!--            </dependency>-->
-<!--        </dependencies>-->
-<!--    </dependencyManagement>-->
+<!--    todo to dodałem-->
+<!--       <dependencyManagement>-->
+<!--           <dependencies>-->
+<!--               <dependency>-->
+<!--                   <groupId>ai.djl</groupId>-->
+<!--                   <artifactId>bom</artifactId>-->
+<!--                   <version>${djl.version}</version>-->
+<!--                   <type>pom</type>-->
+<!--                   <scope>import</scope>-->
+<!--               </dependency>-->
+<!--           </dependencies>-->
+<!--       </dependencyManagement>-->
 
     <repositories>
         <repository>
@@ -186,6 +187,12 @@ under the License.
             <groupId>nz.ac.waikato.cms.moa</groupId>
             <artifactId>moa</artifactId>
             <version>2024.07.0</version>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>ai.djl.pytorch</groupId>-->
+<!--                    <artifactId>pytorch-native-auto</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
     </dependencies>
 
@@ -242,6 +249,13 @@ under the License.
                                         <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
                                 </filter>
+<!--                                todo to ja dodałem na dole -->
+<!--                                <filter>-->
+<!--                                    <artifact>ai.djl.pytorch</artifact>-->
+<!--                                    <excludes>-->
+<!--                                        <exclude>ai/djl/pytorch/jni/NativeHelper.class</exclude>-->
+<!--                                    </excludes>-->
+<!--                                </filter>-->
                             </filters>
                             <transformers>
                                 <transformer
