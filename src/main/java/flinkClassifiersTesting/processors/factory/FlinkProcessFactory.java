@@ -25,10 +25,10 @@ import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.nio.file.StandardOpenOption.CREATE;
 
 public class FlinkProcessFactory {
     public static <T extends ClassifierParamsInterface, C extends BaseClassifier, P extends BaseProcessFunction<C>> void runJobs(String datasetPath, long bootstrapSamplesLimit, ProcessFunctionsFromParametersFactory<T, C, P> processFunctionsFromParametersFactory) throws FileNotFoundException {
@@ -71,7 +71,9 @@ public class FlinkProcessFactory {
                 csvColumnsHeader.addAll(processFunction.csvColumnsHeader());
                 ClassificationGlobalParameters globalParameters = new ClassificationGlobalParameters(jobExecutionResult.getJobID().toString(), csvColumnsHeader);
                 Gson gson = new Gson();
-                Files.write(Paths.get(currentSinkPath + "/result.json"), gson.toJson(globalParameters).getBytes(StandardCharsets.UTF_8));
+                String resultsFilePath = currentSinkPath + "/result.json";
+                Files.createDirectories(Paths.get(resultsFilePath).getParent());
+                Files.write(Paths.get(resultsFilePath), gson.toJson(globalParameters).getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -117,9 +119,12 @@ public class FlinkProcessFactory {
 
     private static String readExperimentId() {
         String experimentId = System.getenv("EXPERIMENT_ID");
-        if (experimentId == null)
-            experimentId = UUID.randomUUID().toString();
+        if (experimentId != null && !experimentId.isBlank() && !experimentId.isEmpty())
+            return experimentId;
 
+        LocalDateTime localDate = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss");
+        experimentId = localDate.format(formatter);
         return experimentId;
     }
 
@@ -134,7 +139,12 @@ public class FlinkProcessFactory {
     }
 
     private static FileSource<PlainExample> createSource(String filepath) {
-        CsvReaderFormat<PlainExample> format = CsvReaderFormat.forSchema(CsvSchema.builder().setSkipFirstDataRow(true).addArrayColumn("attributes", "#").addColumn("plainClass").build(), TypeInformation.of(PlainExample.class));
+        CsvReaderFormat<PlainExample> format = CsvReaderFormat.forSchema(
+                CsvSchema.builder()
+                        .setSkipFirstDataRow(true)
+                        .addArrayColumn("attributes", "#")
+                        .addColumn("plainClass").build(), TypeInformation.of(PlainExample.class)
+        );
 
         return FileSource.forRecordStreamFormat(format, Path.fromLocalFile(new File(filepath))).build();
     }

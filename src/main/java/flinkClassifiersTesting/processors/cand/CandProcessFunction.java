@@ -10,6 +10,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import java.util.List;
 import java.util.Map;
 
+import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.*;
+
 public abstract class CandProcessFunction extends BaseProcessFunctionClassifyAndTrain<Cand> {
 
     public CandProcessFunction(String name, String dataset, long bootstrapSamplesLimit, Map<String, Integer> encoder) {
@@ -25,7 +27,7 @@ public abstract class CandProcessFunction extends BaseProcessFunctionClassifyAnd
 
     @Override
     public List<String> csvColumnsHeader() {
-        return List.of(BaseClassifierFields.CLASSIFICATION_DURATION, BaseClassifierFields.TRAINING_DURATION);
+        return List.of(USED_OPTIMIZER, LAYER_SIZE, LEARNING_RATE, BaseClassifierFields.CLASSIFICATION_DURATION, BaseClassifierFields.TRAINING_DURATION);
     }
 
 }

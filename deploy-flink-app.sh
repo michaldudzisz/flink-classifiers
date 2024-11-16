@@ -34,11 +34,7 @@ fi
 #  fi
 #fi
 
-# Always start a new cluster in contrary to what is above.
-# This is a workaround for problem with loading pytorch native library in Task Manager.
-# Pytorch could not be loaded because it was already loaded by some other ClassLoader
-# when run second time on cluster.
-# todo można kiedyś się jeszcze temu przyjrzeć
+# Always start a new cluster to limit local machine memory usage when it's not running any jobs
 ${FLINK_BIN_PATH}/start-cluster.sh
 
 jar_dir="./target"
@@ -52,7 +48,7 @@ echo "tu doszedłem i żyję, jarpath to będzie $(realpath $jar_path)}"
 
 jar_absolute_path=$(realpath $jar_path)
 
-export EXPERIMENT_ID=$(uuidgen)
+export EXPERIMENT_ID=$(date +%Y-%m-%dT%H:%M:%S)
 
 "$FLINK_BIN_PATH"/flink run -m "${FLINK_ADDRESS}:${FLINK_PORT}" "$jar_absolute_path" --env EXPERIMENT_ID="$EXPERIMENT_ID" --env RESULTS_DIRECTORY="$RESULTS_DIRECTORY"
 

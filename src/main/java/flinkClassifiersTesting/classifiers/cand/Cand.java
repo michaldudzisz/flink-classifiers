@@ -5,13 +5,19 @@ import flinkClassifiersTesting.classifiers.base.BaseClassifierClassifyAndTrain;
 import flinkClassifiersTesting.inputs.Example;
 import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
 import moa.classifiers.deeplearning.CAND;
+import moa.classifiers.deeplearning.MLP;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
+
+import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.*;
 
 /*
 This class is a flinkClassifiersTesting wrapper for moa.classifiers.deeplearning.CAND
@@ -21,35 +27,36 @@ public class Cand extends BaseClassifierClassifyAndTrain {
     private CAND cand = null;
     private Instances datasetProperties = null;
 
-    int i = 0;
-
     public Cand(CandClassifierParams params) {
+        System.setProperty("ai.djl.pytorch.native_helper", "ai.djl.pytorch.jni.NativeHelper");
+
         cand = new CAND();
 
-        if (params.pSize == CandClassifierParams.PoolSize.P10)
-            cand.largerPool.setChosenIndex(0); // P = 10
-        else
-            cand.largerPool.setChosenIndex(1); // P = 30
+        // configured parameters
+        cand.largerPool.setChosenIndex(params.pSize == CandClassifierParams.PoolSize.P10 ? 0 : 1); // |P|
+        cand.numberOfMLPsToTrainOption.setValue(params.mSize); // |M|
+        cand.backPropLossThreshold.setValue(params.backpropagationThreshold); // Math.pow(10, 10);
+        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(500); // 10% of elec
 
-        cand.numberOfMLPsToTrainOption.setValue(params.mSize); // M
+        // output files
+        if (params.votingStatsFile != null)
+            cand.votesDumpFileName.setValue(params.votingStatsFile);
+//        cand.statsDumpFileName.setValue("cand_stats.txt");
 
-        cand.numberOfLayersInEachMLP.setValue(1); // 1
-        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(100); // 100 - MAX
+
         cand.miniBatchSize.setValue(1); // incrementally
+        cand.numberOfLayersInEachMLP.setValue(1); // 1
+        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(1_000); // 1000
         cand.useOneHotEncode.setValue(true); // t
         cand.useNormalization.setValue(true); // t
-//        cand.backPropLossThreshold.setValue(0.3); // 0.3
         cand.deviceTypeOption.setChosenIndex(1); // CPU
-        cand.statsDumpFileName.setValue("cand_stats.txt");
     }
 
     @Override
     protected ArrayList<Tuple2<String, Long>> trainImplementation(Example example, int predictedClass, ArrayList<Tuple2<String, Long>> performances) {
         // przyjmuje i zwraca performance
-        if (i == 0) {
-            Instance moaInstance = mapExampleToInstance(example);
-            cand.trainOnInstanceImpl(moaInstance);
-        }
+        Instance moaInstance = mapExampleToInstance(example);
+        cand.trainOnInstanceImpl(moaInstance);
         return performances;
     }
 
@@ -58,10 +65,9 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         Instance moaInstance = mapExampleToInstance(example);
         double[] votesForEachClass = cand.getVotesForInstance(moaInstance);
         int predictedClass = IntStream.range(0, votesForEachClass.length).reduce((i, j) -> votesForEachClass[i] > votesForEachClass[j] ? i : j).getAsInt();
-        return new Tuple2<>(
-                predictedClass,
-                new ArrayList<>() // To są parametry tego jak mu poszło, można zobaczyć klasę BaseDynamicWeightedMajority
-        );
+        ArrayList<Tuple2<String, Long>> performances = getBestMLPParams();
+
+        return new Tuple2<>(predictedClass, performances);
     }
 
     @Override
@@ -71,6 +77,7 @@ public class Cand extends BaseClassifierClassifyAndTrain {
 
     @Override
     public void bootstrapTrainImplementation(Example example) {
+        cand.getVotesForInstance(mapExampleToInstance(example)); // todo we do this so that MOA's Cand can increment samplesSeen counter
         trainImplementation(example, example.getMappedClass(), null);
     }
 
@@ -94,5 +101,25 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         instance.setDataset(datasetProperties);
 
         return instance;
+    }
+
+    private MLP findCurrentlyBestMLP() {
+        MLP[] nns;
+        try {
+            nns = (MLP[]) FieldUtils.readField(cand, "nn", true);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("not allowed to read Cand's private field nn.", e);
+        }
+
+        return Arrays.stream(nns).min(Comparator.comparingDouble(MLP::getLossEstimation)).get();
+    }
+
+    private ArrayList<Tuple2<String, Long>> getBestMLPParams() {
+        MLP bestMLP = findCurrentlyBestMLP();
+        ArrayList<Tuple2<String, Long>> params = new ArrayList<>();
+        params.add(new Tuple2<>(USED_OPTIMIZER, getOptimizerFromNNName(bestMLP.modelName)));
+        params.add(new Tuple2<>(LAYER_SIZE, getHiddenLayerSizeFromNNName(bestMLP.modelName)));
+        params.add(new Tuple2<>(LEARNING_RATE, getLearningRateFromNNName(bestMLP.modelName)));
+        return params;
     }
 }

@@ -225,7 +225,7 @@ def getBestClassifier(classifierPath: str):
 
     allResults = []
 
-    for classifierParamsRaw in os.listdir(classifierPath):
+    for classifierParamsRaw in os.listdir(classifierPath): # wchodze na poziom tych P10_M2
         classifierParamsPath = f"{classifierPath}/{classifierParamsRaw}"
 
         classifierParams = extractParams(classifierParamsRaw)

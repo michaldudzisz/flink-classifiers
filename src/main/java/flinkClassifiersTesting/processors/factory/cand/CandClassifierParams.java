@@ -8,13 +8,38 @@ public class CandClassifierParams implements ClassifierParamsInterface {
 
     public int mSize = 2;
     public PoolSize pSize = PoolSize.P30;
+    public double backpropagationThreshold = 0;
+    public String votingStatsFile = null;
 
     public CandClassifierParams() {
     }
 
-    public CandClassifierParams(PoolSize pSize, int mSize) {
+    public CandClassifierParams(
+            PoolSize pSize,
+            int mSize
+    ) {
         this.mSize = mSize;
         this.pSize = pSize;
+    }
+
+    public CandClassifierParams(
+            PoolSize pSize,
+            int mSize,
+            String outputVotingStatsFile
+    ) {
+        this.mSize = mSize;
+        this.pSize = pSize;
+        this.votingStatsFile = outputVotingStatsFile;
+    }
+
+    public CandClassifierParams(
+            PoolSize pSize,
+            int mSize,
+            double backpropagationThreshold
+    ) {
+        this.mSize = mSize;
+        this.pSize = pSize;
+        this.backpropagationThreshold = backpropagationThreshold;
     }
 
     @Override

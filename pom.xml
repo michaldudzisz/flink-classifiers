@@ -101,7 +101,11 @@ under the License.
             <version>${flink.version}</version>
 <!--            <scope>provided</scope>-->
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.17.0</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-test-utils -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -205,8 +209,8 @@ under the License.
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+                    <source>11</source>
+                    <target>11</target>
                     <!--                    <compilerArgs>-->
                     <!--                        <arg>&#45;&#45;add-opens</arg>-->
                     <!--                        <arg>java.base/java.util=ALL-UNNAMED</arg>-->
@@ -236,6 +240,8 @@ under the License.
                                     <exclude>com.google.code.findbugs:jsr305</exclude>
 <!--                                    <exclude>org.slf4j:*</exclude>-->
                                     <exclude>org.apache.logging.log4j:*</exclude>
+                                    <exclude>ai.djl:*</exclude>
+                                    <exclude>ai.djl.*:*</exclude>
                                 </excludes>
                             </artifactSet>
                             <filters>
@@ -250,12 +256,12 @@ under the License.
                                     </excludes>
                                 </filter>
 <!--                                todo to ja dodałem na dole -->
-<!--                                <filter>-->
-<!--                                    <artifact>ai.djl.pytorch</artifact>-->
-<!--                                    <excludes>-->
-<!--                                        <exclude>ai/djl/pytorch/jni/NativeHelper.class</exclude>-->
-<!--                                    </excludes>-->
-<!--                                </filter>-->
+                                <filter>
+                                    <artifact>ai.djl.pytorch</artifact>
+                                    <excludes>
+                                        <exclude>ai/djl/pytorch/jni/NativeHelper.class</exclude>
+                                    </excludes>
+                                </filter>
                             </filters>
                             <transformers>
                                 <transformer

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def plot_gradual():
     dataset_len=100_000
-    df = pd.read_csv('./datasets/sea_grad.csv', nrows=dataset_len, sep="[,#]", engine="python")
+    df = pd.read_csv('./datasets/sea_grad_norm.csv', nrows=dataset_len, sep="[,#]", engine="python")
 
     for i in [0, 9]:
         start_row = i * 10_000
@@ -33,7 +33,7 @@ def plot_gradual():
 
 def plot_abrupt():
     dataset_len=100_000
-    df = pd.read_csv('./datasets/sea_abr.csv', nrows=dataset_len, sep="[,#]", engine="python")
+    df = pd.read_csv('./datasets/sea_abr_norm.csv', nrows=dataset_len, sep="[,#]", engine="python")
 
     for i in [1, 3, 6, 9]:
         start_row = i * 10_000

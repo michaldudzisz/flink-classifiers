@@ -1,6 +1,7 @@
 import random
 import pandas as pd
 import numpy as np
+import csv
 
 class SEA:
 
@@ -91,11 +92,24 @@ class SEA:
         return max_class
 
 
+def save_to_normal_csv(data, path_to_file):
+    data.to_csv(path_to_file, index=False)
+
+def save_to_flink_csv(data, path_to_file):
+    with open(path_to_file, 'w') as file:
+        file.write('x1,x2,x3,class\n')
+        for index, row in data.iterrows():
+            file.write(f"{row['x1']}#{row['x2']}#{row['x3']},{int(row['class'])}\n")
+
+
 if __name__ == "__main__":
     sea = SEA()
 
     gradual_dataset = sea.generate_gradual()
-    gradual_dataset.to_csv('./datasets/sea_grad.csv', index=False)
+    save_to_normal_csv(gradual_dataset, './datasets/sea_grad_norm.csv')
+    save_to_flink_csv(gradual_dataset, './datasets/sea_grad.csv')
 
     abrupt_dataset = sea.generate_abrupt()
-    abrupt_dataset.to_csv('./datasets/sea_abr.csv', index=False)
+    save_to_normal_csv(abrupt_dataset, './datasets/sea_abr_norm.csv')
+    save_to_flink_csv(abrupt_dataset, './datasets/sea_abr.csv')
+

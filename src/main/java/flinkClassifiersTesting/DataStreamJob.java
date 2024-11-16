@@ -48,9 +48,11 @@ public class DataStreamJob {
 
     public static void main(String[] args) throws Exception {
         String basePath = getBaseDirectory();
+//        String dataset = "elec-maly";
         String dataset = "elec";
+//        String dataset = "sea_abr";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
-        long bootstrapSamplesLimit = 100L;
+        long bootstrapSamplesLimit = 500L;
 
 //        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
@@ -64,7 +66,11 @@ public class DataStreamJob {
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.extendedDwm(dwmParams));
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.dwm(dwmParams));
 
-        List<CandClassifierParams> candParams = List.of(new CandClassifierParams(CandClassifierParams.PoolSize.P30, 30));
+        List<CandClassifierParams> candParams = List.of(
+//                new CandClassifierParams(CandClassifierParams.PoolSize.P10, 2, "cand_votes.csv"),
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, "cand_votes.csv")
+        );
+
         FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
     }
 }
