@@ -61,14 +61,14 @@ public abstract class BaseProcessFunction<C extends BaseClassifier> extends Keye
         if (sampleNumber <= bootstrapSamplesLimit)
             classifier.bootstrapTrainImplementation(example);
         else {
-            Tuple4<String, Integer, ArrayList<Tuple2<String, Long>>, C> results = processExample(example, classifier);
+            Tuple4<String, Integer, ArrayList<Tuple2<String, Object>>, C> results = processExample(example, classifier);
             collector.collect(new ClassificationResult(results.f0, plainExample.getPlainClass(), decoder.get(results.f1), classifier.generateClassifierParams(), results.f2));
         }
 
         classifierState.update(classifier);
     }
 
-    protected abstract Tuple4<String, Integer, ArrayList<Tuple2<String, Long>>, C> processExample(Example example, C classifier);
+    protected abstract Tuple4<String, Integer, ArrayList<Tuple2<String, Object>>, C> processExample(Example example, C classifier);
 
     protected abstract C createClassifier();
 

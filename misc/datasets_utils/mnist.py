@@ -1,0 +1,131 @@
+import random
+import pandas as pd
+import numpy as np
+import csv
+import numpy as np
+import cv2
+import math
+
+# download MNIST for example from here: https://git-disl.github.io/GTDLBench/datasets/mnist_datasets/
+# we use dataset already converted to a csv file
+# the format is: label, pix-11, pix-12, pix-13, ...
+_MNIST_PATH = "datasets/mnist.csv"
+
+class MNIST:
+
+    _ATTRIBUTES = 28 * 28
+    _DATASET_LEN = 60_000
+
+    def __init__(self, dataset_path):
+        self.dataset_path = dataset_path
+        self._image_one_saved = False
+        self._image_two_saved = False
+        self._image_three_saved = False
+
+    def generate(self, output_path, drift_start, drift_end=None, visualize=False):
+        with open(self.dataset_path, 'r') as csv_file, open(output_path, 'w') as output_csv_file:
+            reader = csv.reader(csv_file)
+            self._write_output_file_header(output_csv_file)
+            last_percentage = 0
+            images_to_visualize = []
+            for line_number, row in enumerate(reader):
+                if len(row) != self._ATTRIBUTES + 1: # attributes + one class label
+                    raise Exception(f"Line {line_number} invalid, incorrect number of pixels.")
+                label = row[0]
+                values = np.array(row[1:], dtype=np.uint8)
+                image = values.reshape((28, 28))
+                current_percentage = self._get_current_percentage(line_number)
+                angle = self._rotation_angle(drift_start=drift_start, percentage=current_percentage, drift_end=drift_end)
+                self._log_progress(last_percentage, current_percentage, angle)
+                last_percentage = current_percentage
+                rotated_image = self._rotate_image(image, angle)
+                self._save_to_visualize_if_applicable(visualize, images_to_visualize, rotated_image, label, current_percentage)
+                rotated_list = rotated_image.flatten().tolist()
+                self._write_output_file_line(output_csv_file, rotated_list, label)
+
+            if visualize:
+                for image in images_to_visualize:
+                    cv2.imshow(f"Image", image)
+                    cv2.waitKey(0)
+
+    def _rotate_image(self, image, angle):
+        # angle - in degrees
+        (h, w) = image.shape
+        center = (w // 2, h // 2)
+        rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+        rotated = cv2.warpAffine(image, rotation_matrix, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        return rotated
+
+    def _get_current_percentage(self, index):
+        return index / self._DATASET_LEN
+
+    def _rotation_angle(self, drift_start, percentage, drift_end=None):
+        angle = 0
+        if drift_end is None:
+            angle = 0 if percentage <= drift_start else 90
+            return -angle
+
+        if drift_end is not None:
+            if percentage <= drift_start:
+                angle = 0
+            elif drift_start < percentage <= drift_end:
+                angle = (percentage - drift_start) / (drift_end - drift_start) * 90
+            else:
+                angle = 90
+
+        return -angle
+
+    def _log_progress(self, last_percentage, current_percentage, angle):
+        last_progress = math.floor(last_percentage * 100)
+        current_progress = math.floor(current_percentage * 100)
+        if current_progress > last_progress:
+            print(f"{current_progress}%, a: {math.floor(angle)}")
+
+    def _write_output_file_header(self, file):
+        file.write(f"x0")
+        for i in range(1, self._ATTRIBUTES):
+            file.write(f",x{i}")
+        file.write(f",class\n")
+
+    def _write_output_file_line(self, file, attributes, label):
+        file.write(f"{attributes[0]}")
+        for i in range(1, self._ATTRIBUTES):
+            file.write(f"#{attributes[i]}")
+        file.write(f",{label}\n")
+
+    def _save_to_visualize_if_applicable(self, visualize, images, image, label, percentage):
+        if not visualize:
+            return
+
+        if percentage < 0.1 and not self._image_one_saved:
+            if label == "4":
+                images.append(image)
+                self._image_one_saved = True
+
+        if 0.625 <= percentage <= 0.630 and not self._image_two_saved:
+            if label == "4":
+                images.append(image)
+                self._image_two_saved = True
+
+        if 0.95 <= percentage <= 1.0 and not self._image_three_saved:
+            if label == "4":
+                images.append(image)
+                self._image_three_saved = True
+
+def save_to_normal_csv(data, path_to_file):
+    data.to_csv(path_to_file, index=False)
+
+def save_to_flink_csv(data, path_to_file):
+    with open(path_to_file, 'w') as file:
+        file.write('x1,x2,x3,class\n')
+        for index, row in data.iterrows():
+            file.write(f"{row['x1']}#{row['x2']}#{row['x3']},{int(row['class'])}\n")
+
+
+if __name__ == "__main__":
+    # download MNIST for example from here: https://git-disl.github.io/GTDLBench/datasets/mnist_datasets/
+    # we use dataset already converted to a csv file
+    # the format is: label, pix-11, pix-12, pix-13, ...
+    mnist = MNIST(_MNIST_PATH)
+    mnist.generate("./datasets/mnist_grad.csv", drift_start=0.50, drift_end=0.75, visualize=True)
+

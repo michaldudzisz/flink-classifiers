@@ -26,8 +26,8 @@ public abstract class WindowedDetectorHoeffdingTree<N_S extends NodeStatistics, 
     }
 
     @Override
-    protected Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Long>> performances) throws RuntimeException {
-        Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyResults = super.classifyImplementation(example, performances);
+    protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Object>> performances) throws RuntimeException {
+        Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyResults = super.classifyImplementation(example, performances);
 
         driftDetector.updateWindow(example.getMappedClass() == classifyResults.f0);
 
@@ -52,8 +52,8 @@ public abstract class WindowedDetectorHoeffdingTree<N_S extends NodeStatistics, 
     }
 
     @Override
-    protected ArrayList<Tuple2<String, Long>> trainImplementation(Example example) throws RuntimeException {
-        ArrayList<Tuple2<String, Long>> trainResults = super.trainImplementation(example);
+    protected ArrayList<Tuple2<String, Object>> trainImplementation(Example example) throws RuntimeException {
+        ArrayList<Tuple2<String, Object>> trainResults = super.trainImplementation(example);
 
         if (rootSubstitute != null) {
             nSamplesSinceSubstituteTrainingStart++;

@@ -23,7 +23,7 @@ public abstract class NaiveBayesClassifier implements ClassifierInterface {
     }
 
     @Override
-    public Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classify(Example example) {
+    public Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classify(Example example) {
         Instant start = Instant.now();
 
         sampleNumber++;
@@ -56,7 +56,7 @@ public abstract class NaiveBayesClassifier implements ClassifierInterface {
     protected abstract double attributeProbability(int classNumber, int attributeNumber, double[] attributes);
 
     @Override
-    public ArrayList<Tuple2<String, Long>> train(Example example) {
+    public ArrayList<Tuple2<String, Object>> train(Example example) {
         Instant start = Instant.now();
 
         int exampleClass = example.getMappedClass();
@@ -66,5 +66,5 @@ public abstract class NaiveBayesClassifier implements ClassifierInterface {
         return trainImplementation(example, start);
     }
 
-    protected abstract ArrayList<Tuple2<String, Long>> trainImplementation(Example example, Instant start);
+    protected abstract ArrayList<Tuple2<String, Object>> trainImplementation(Example example, Instant start);
 }

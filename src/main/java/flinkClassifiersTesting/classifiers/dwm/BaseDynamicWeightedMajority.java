@@ -41,7 +41,7 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
     }
 
     @Override
-    protected ArrayList<Tuple2<String, Long>> trainImplementation(Example example, int predictedClass, ArrayList<Tuple2<String, Long>> performances) {
+    protected ArrayList<Tuple2<String, Object>> trainImplementation(Example example, int predictedClass, ArrayList<Tuple2<String, Object>> performances) {
         if (shouldNormalizeWeightsAndDeleteClassifiers()) {
             normalizeWeightsAndDeleteClassifiersSideEffects();
             performances.addAll(normalizeWeightsAndDeleteClassifiersWithWeightUnderThreshold());
@@ -63,9 +63,9 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
             performances.add(Tuple2.of(DwmClassifierFields.ADDED_CLASSIFIERS_COUNT, 0L));
         }
 
-        ArrayList<Tuple2<String, Long>> avgLocalPerformances = new ArrayList<>();
+        ArrayList<Tuple2<String, Object>> avgLocalPerformances = new ArrayList<>();
         classifiersPojo.forEach(classifier -> {
-            ArrayList<Tuple2<String, Long>> localClassifierPerformances = classifier.train(example);
+            ArrayList<Tuple2<String, Object>> localClassifierPerformances = classifier.train(example);
             updateGlobalWithLocalPerformances(localClassifierPerformances, avgLocalPerformances);
         });
 
@@ -82,9 +82,9 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
     protected abstract void normalizeWeightsAndDeleteClassifiersSideEffects();
 
     @Override
-    protected Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyImplementation(Example example) {
+    protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         sampleNumber++;
-        ArrayList<Tuple2<String, Long>> globalClassifyResults = new ArrayList<>();
+        ArrayList<Tuple2<String, Object>> globalClassifyResults = new ArrayList<>();
 
         Double[] votesForEachClass = initializeVoteForEachClass();
 
@@ -94,7 +94,7 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
         long wrongVotesCount = 0L;
 
         for (T classifierPojo : classifiersPojo) {
-            Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyResults = classifierPojo.classify(example);
+            Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyResults = classifierPojo.classify(example);
 
             updateGlobalWithLocalPerformances(classifyResults.f1, globalClassifyResults);
 
@@ -120,8 +120,8 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
 
     protected abstract long lowerWeightAndReturnWeightLoweringCount(T classifierPojo, long weightsLoweringCount);
 
-    protected ArrayList<Tuple2<String, Long>> normalizeWeightsAndDeleteClassifiersWithWeightUnderThreshold() {
-        ArrayList<Tuple2<String, Long>> performances = new ArrayList<>(3);
+    protected ArrayList<Tuple2<String, Object>> normalizeWeightsAndDeleteClassifiersWithWeightUnderThreshold() {
+        ArrayList<Tuple2<String, Object>> performances = new ArrayList<>(3);
 
         double maxWeight = classifiersPojo.stream().mapToDouble(ClassifierPojo::getWeight).max().orElseThrow(NoSuchElementException::new);
         ListIterator<T> classifierIterator = classifiersPojo.listIterator();
@@ -150,17 +150,27 @@ public abstract class BaseDynamicWeightedMajority<C extends ClassifierInterface,
         return performances;
     }
 
-    protected static void averagePerformanceByLocalClassifier(ArrayList<Tuple2<String, Long>> globalClassifyResults, int usedClassifiersCount) {
-        globalClassifyResults.forEach(measurement -> measurement.f1 /= usedClassifiersCount);
+    protected static void averagePerformanceByLocalClassifier(ArrayList<Tuple2<String, Object>> globalClassifyResults, int usedClassifiersCount) {
+        globalClassifyResults.stream()
+                .filter(measurement -> measurement.f1 instanceof Long) // for this classifier, all performances should be Long, so this step should not be necessary
+                .forEach(measurement -> {
+                    Long measurementValue = (Long) measurement.f1; // this assumes that for this classifier all performances are Long
+                    measurement.f1 = measurementValue / usedClassifiersCount;
+                });
     }
 
-    protected static void updateGlobalWithLocalPerformances(ArrayList<Tuple2<String, Long>> localPerformances, ArrayList<Tuple2<String, Long>> globalPerformances) {
+    protected static void updateGlobalWithLocalPerformances(ArrayList<Tuple2<String, Object>> localPerformances, ArrayList<Tuple2<String, Object>> globalPerformances) {
         for (int localMeasurementIndex = 0; localMeasurementIndex < localPerformances.size(); localMeasurementIndex++) {
-            if (localMeasurementIndex >= globalPerformances.size())
-                globalPerformances.add(localPerformances.get(localMeasurementIndex));
+            if (localMeasurementIndex >= globalPerformances.size()) {
+                if (localPerformances.get(localMeasurementIndex).f1 instanceof Long) { // for this classifier, all performances should be Long, so this step should not be necessary
+                    Long valueAsLong = (Long) localPerformances.get(localMeasurementIndex).f1; // this assumes that for this classifier all performances are Long
+                    globalPerformances.add(new Tuple2<>(localPerformances.get(localMeasurementIndex).f0, valueAsLong));
+                }
+            }
             else {
-                Tuple2<String, Long> measurementFromGlobal = globalPerformances.get(localMeasurementIndex);
-                measurementFromGlobal.f1 += localPerformances.get(localMeasurementIndex).f1;
+                Tuple2<String, Object> measurementFromGlobal = globalPerformances.get(localMeasurementIndex);
+                Long measurementFromGlobalValue = (Long) measurementFromGlobal.f1;
+                measurementFromGlobal.f1 = measurementFromGlobalValue + (Long) localPerformances.get(localMeasurementIndex).f1; // this assumes that for this classifier all performances are Long
             }
         }
     }

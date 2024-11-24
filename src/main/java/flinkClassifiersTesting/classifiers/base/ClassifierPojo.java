@@ -33,11 +33,11 @@ public class ClassifierPojo<C extends ClassifierInterface> {
         return classifier;
     }
 
-    public ArrayList<Tuple2<String, Long>> train(Example example) {
+    public ArrayList<Tuple2<String, Object>> train(Example example) {
         return classifier.train(example);
     }
 
-    public Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classify(Example example) {
+    public Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classify(Example example) {
         return classifier.classify(example);
     }
 

@@ -13,12 +13,12 @@ public class ClassificationResult implements Serializable {
 
 
     public String params;
-    public ArrayList<Tuple2<String, Long>> performances;
+    public ArrayList<Tuple2<String, Object>> performances;
 
     public ClassificationResult() {
     }
 
-    public ClassificationResult(String timestamp, String exampleClass, String predicted, String params, ArrayList<Tuple2<String, Long>> performances) {
+    public ClassificationResult(String timestamp, String exampleClass, String predicted, String params, ArrayList<Tuple2<String, Object>> performances) {
         this.timestamp = timestamp;
         this.exampleClass = exampleClass;
         this.predicted = predicted;

@@ -39,10 +39,10 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
         treeSize = 1L;
     }
 
-    protected Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Long>> performances) throws RuntimeException {
+    protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Object>> performances) throws RuntimeException {
         Node<N_S, B> leaf = getLeaf(example, root);
         int predictedClass = leaf.getMajorityClass(example);
-        logger.info(example + " predicted with " + predictedClass);
+//        logger.info(example + " predicted with " + predictedClass);
         return new Tuple2<>(predictedClass, performances);
     }
 
@@ -62,7 +62,7 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
         updateLeaf(example, leaf, new ArrayList<>());
     }
 
-    protected void updateLeaf(Example example, Node<N_S, B> leaf, ArrayList<Tuple2<String, Long>> performances) {
+    protected void updateLeaf(Example example, Node<N_S, B> leaf, ArrayList<Tuple2<String, Object>> performances) {
         leaf.updateStatistics(example);
 
         if (leaf.getN() > nMin) {
@@ -73,24 +73,24 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
 
             if (pojo.xA == null) {
                 String msg = "Hoeffding test showed no attributes";
-                logger.info(msg);
+//                logger.info(msg);
                 throw new RuntimeException(msg);
             } else if (pojo.hXa != null && pojo.hXb != null && (pojo.hXa - pojo.hXb > eps)) {
-                logger.info("Heuristic value is correspondingly higher, splitting");
+//                logger.info("Heuristic value is correspondingly higher, splitting");
                 leaf.split(pojo.xA, statisticsBuilder, example, disableAttribute());
                 performances.add(Tuple2.of(HoeffdingTreeFields.LEAF_SPLIT, 1L));
                 treeSize += 2L;
             } else if (eps < tau) {
-                logger.info("Epsilon is lower than tau, splitting");
+//                logger.info("Epsilon is lower than tau, splitting");
                 leaf.split(pojo.xA, statisticsBuilder, example, disableAttribute());
                 performances.add(Tuple2.of(HoeffdingTreeFields.LEAF_SPLIT, 2L));
                 treeSize += 2L;
             } else {
-                logger.info("No split");
+//                logger.info("No split");
                 performances.add(Tuple2.of(HoeffdingTreeFields.LEAF_SPLIT, 0L));
             }
         } else {
-            logger.info("Not enough samples to test splits");
+//            logger.info("Not enough samples to test splits");
             performances.add(Tuple2.of(HoeffdingTreeFields.LEAF_SPLIT, -1L));
         }
         performances.add(Tuple2.of(HoeffdingTreeFields.TREE_SIZE, treeSize));
@@ -100,20 +100,20 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
         return attributesNumber != 1;
     }
 
-    protected ArrayList<Tuple2<String, Long>> trainImplementation(Example example) throws RuntimeException {
+    protected ArrayList<Tuple2<String, Object>> trainImplementation(Example example) throws RuntimeException {
         n++;
-        ArrayList<Tuple2<String, Long>> trainingPerformances = new ArrayList<>();
+        ArrayList<Tuple2<String, Object>> trainingPerformances = new ArrayList<>();
         Node<N_S, B> leaf = getLeaf(example, trainingPerformances);
-        logger.info("Training: " + example.toString());
+//        logger.info("Training: " + example.toString());
 
         updateLeaf(example, leaf, trainingPerformances);
 
-        logger.info(leaf.getStatistics().toString());
+//        logger.info(leaf.getStatistics().toString());
 
         return trainingPerformances;
     }
 
-    protected Node<N_S, B> getLeaf(Example example, ArrayList<Tuple2<String, Long>> performances) {
+    protected Node<N_S, B> getLeaf(Example example, ArrayList<Tuple2<String, Object>> performances) {
         Instant start = Instant.now();
         long count = 1;
         Node<N_S, B> result = root;

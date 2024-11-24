@@ -39,7 +39,7 @@ public class GaussianNaiveBayesClassifier extends NaiveBayesClassifier {
     }
 
     @Override
-    protected ArrayList<Tuple2<String, Long>> trainImplementation(Example example, Instant start) {
+    protected ArrayList<Tuple2<String, Object>> trainImplementation(Example example, Instant start) {
         int classNumber = example.getMappedClass();
         ArrayList<Tuple2<Double, Double>> attributeSums = attributeSumsForEachClass.get(classNumber);
 

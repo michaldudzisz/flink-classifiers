@@ -10,6 +10,7 @@ public class CandClassifierParams implements ClassifierParamsInterface {
     public PoolSize pSize = PoolSize.P30;
     public double backpropagationThreshold = 0;
     public String votingStatsFile = null;
+    public boolean logAllMlpLosses = false;
 
     public CandClassifierParams() {
     }
@@ -30,6 +31,16 @@ public class CandClassifierParams implements ClassifierParamsInterface {
         this.mSize = mSize;
         this.pSize = pSize;
         this.votingStatsFile = outputVotingStatsFile;
+    }
+
+    public CandClassifierParams(
+            PoolSize pSize,
+            int mSize,
+            boolean logAllMlpLosses
+    ) {
+        this.mSize = mSize;
+        this.pSize = pSize;
+        this.logAllMlpLosses = logAllMlpLosses;
     }
 
     public CandClassifierParams(

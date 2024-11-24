@@ -19,6 +19,8 @@
 package flinkClassifiersTesting;
 
 import flinkClassifiersTesting.processors.factory.FlinkProcessFactory;
+import flinkClassifiersTesting.processors.factory.arf.AdaptiveRandomForestClassifierParams;
+import flinkClassifiersTesting.processors.factory.arf.AdaptiveRandomForestProcessFactory;
 import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
 import flinkClassifiersTesting.processors.factory.cand.CandProcessFactory;
 import flinkClassifiersTesting.processors.factory.vfdt.VfdtClassifierParams;
@@ -49,28 +51,23 @@ public class DataStreamJob {
     public static void main(String[] args) throws Exception {
         String basePath = getBaseDirectory();
 //        String dataset = "elec-maly";
-        String dataset = "elec";
+//        String dataset = "elec";
 //        String dataset = "sea_abr";
+        String dataset = "mnist_grad";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
         long bootstrapSamplesLimit = 500L;
 
 //        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
 
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdtEntropy(vfdtParams));
-//
-//        List<WindowedDetectorVfdtClassifierParams> wadVfdtParams = List.of(new WindowedDetectorVfdtClassifierParams(0.2, 0.1, 50, 1000, 0.9, 0.85, 1, 1));
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.bstVfdtWindowedDetector(wadVfdtParams));
-//
-//        List<DwmClassifierParams> dwmParams = List.of(new DwmClassifierParams(0.5, 0.2, 100));
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.extendedDwm(dwmParams));
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, DwmProcessFactory.dwm(dwmParams));
-
-        List<CandClassifierParams> candParams = List.of(
-//                new CandClassifierParams(CandClassifierParams.PoolSize.P10, 2, "cand_votes.csv"),
-                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, "cand_votes.csv")
+        List<AdaptiveRandomForestClassifierParams> arfParams = List.of(
+                new AdaptiveRandomForestClassifierParams(30, 6.0f, 60)
         );
+        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AdaptiveRandomForestProcessFactory.arf(arfParams));
 
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
+//        List<CandClassifierParams> candParams = List.of(
+//                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, false)
+//        );
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
     }
 }

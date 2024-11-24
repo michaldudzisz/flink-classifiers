@@ -81,9 +81,9 @@ def readData(paths: list[str], headers: list[str]):
                     correct = correct + 1
 
                 result[accuracyKey].append(100.0 * float(correct) / float(count))
-
                 for key in collectedHeaders:
-                    result[key].append(int(row[key]))
+                    if row[key].isdigit(): # we skip non-integer performances
+                        result[key].append(int(row[key]))
 
     result_np = {}
     for key, value in result.items():

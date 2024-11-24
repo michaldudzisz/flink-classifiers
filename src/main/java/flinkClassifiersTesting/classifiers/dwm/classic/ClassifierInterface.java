@@ -6,7 +6,7 @@ import flinkClassifiersTesting.inputs.Example;
 import java.util.ArrayList;
 
 public interface ClassifierInterface {
-    Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classify(Example example); // each classifier should return same metrics
+    Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classify(Example example); // each classifier should return same metrics
 
-    ArrayList<Tuple2<String, Long>> train(Example example);
+    ArrayList<Tuple2<String, Object>> train(Example example);
 }

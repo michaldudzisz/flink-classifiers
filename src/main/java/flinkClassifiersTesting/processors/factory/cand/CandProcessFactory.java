@@ -17,7 +17,7 @@ public class CandProcessFactory {
                 return new CandProcessFunction(name, dataset, samplesLimit, classEncoder) {
                     @Override
                     protected Cand createClassifier() {
-                        return new Cand(params);
+                        return new Cand(classNumber, attributesNumber, dataset, classEncoder, params);
                     }
                 };
             }

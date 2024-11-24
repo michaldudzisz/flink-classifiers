@@ -2,6 +2,7 @@ package flinkClassifiersTesting.processors.cand;
 
 import flinkClassifiersTesting.classifiers.base.BaseClassifierFields;
 import flinkClassifiersTesting.classifiers.cand.Cand;
+import flinkClassifiersTesting.classifiers.cand.CandClassifierFields;
 import flinkClassifiersTesting.processors.base.BaseProcessFunctionClassifyAndTrain;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -27,7 +28,12 @@ public abstract class CandProcessFunction extends BaseProcessFunctionClassifyAnd
 
     @Override
     public List<String> csvColumnsHeader() {
-        return List.of(USED_OPTIMIZER, LAYER_SIZE, LEARNING_RATE, BaseClassifierFields.CLASSIFICATION_DURATION, BaseClassifierFields.TRAINING_DURATION);
+        return List.of(
+                BEST_MLP_NAME,
+                MLP_LOSSES, // todo to może być warunkowe?
+                BaseClassifierFields.CLASSIFICATION_DURATION,
+                BaseClassifierFields.TRAINING_DURATION
+        );
     }
 
 }

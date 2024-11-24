@@ -14,10 +14,10 @@ public abstract class FunctionalBstHoeffdingTree<N_S extends NaiveBayesNodeStati
     }
 
     @Override
-    protected Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Long>> performances) throws RuntimeException {
+    protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Object>> performances) throws RuntimeException {
         Node<N_S, B> leaf = getLeaf(example, root);
         int predictedClass = leaf.getStatistics().getMajorityClass(example, totalStatistics.getAttributeCountsTrees());
-        logger.info(example + " predicted with " + predictedClass);
+//        logger.info(example + " predicted with " + predictedClass);
         return new Tuple2<>(predictedClass, performances);
     }
 }

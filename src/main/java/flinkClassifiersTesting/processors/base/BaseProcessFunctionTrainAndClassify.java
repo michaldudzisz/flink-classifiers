@@ -14,9 +14,9 @@ public abstract class BaseProcessFunctionTrainAndClassify<C extends BaseClassifi
     }
 
     @Override
-    protected Tuple4<String, Integer, ArrayList<Tuple2<String, Long>>, C> processExample(Example example, C classifier) {
-        Tuple2<String, ArrayList<Tuple2<String, Long>>> trainingResult = classifier.train(example);
-        Tuple2<Integer, ArrayList<Tuple2<String, Long>>> classifyResult = classifier.classify(example, trainingResult.f1);
+    protected Tuple4<String, Integer, ArrayList<Tuple2<String, Object>>, C> processExample(Example example, C classifier) {
+        Tuple2<String, ArrayList<Tuple2<String, Object>>> trainingResult = classifier.train(example);
+        Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyResult = classifier.classify(example, trainingResult.f1);
         return new Tuple4<>(trainingResult.f0, classifyResult.f0, classifyResult.f1, classifier);
     }
 }
