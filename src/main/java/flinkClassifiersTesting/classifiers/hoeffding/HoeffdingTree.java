@@ -23,6 +23,8 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
     protected long n = 0L;
     protected long treeSize;
 
+    int samplesProcessed = 0;
+
 
     public HoeffdingTree(int classesNumber, double delta, int attributesNumber, double tau, long nMin, B statisticsBuilder) {
         if (classesNumber <= 0)
@@ -40,6 +42,9 @@ public abstract class HoeffdingTree<N_S extends NodeStatistics, B extends Statis
     }
 
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example, ArrayList<Tuple2<String, Object>> performances) throws RuntimeException {
+        samplesProcessed++;
+        System.out.println("i: " + samplesProcessed);
+
         Node<N_S, B> leaf = getLeaf(example, root);
         int predictedClass = leaf.getMajorityClass(example);
 //        logger.info(example + " predicted with " + predictedClass);

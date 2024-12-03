@@ -25,6 +25,8 @@ public class Cand extends BaseClassifierClassifyAndTrain {
     private Instances datasetProperties = null;
     private boolean logAllMlpLosses = false;
 
+    int samplesProcessed = 0;
+
     public Cand(
             int classNumber,
             int attributesNumber,
@@ -72,6 +74,9 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         Instance moaInstance = mapExampleToInstance(example, datasetProperties);
         double[] votesForEachClass = cand.getVotesForInstance(moaInstance);
         int predictedClass = IntStream.range(0, votesForEachClass.length).reduce((i, j) -> votesForEachClass[i] > votesForEachClass[j] ? i : j).getAsInt();
+
+        samplesProcessed++;
+        System.out.println("i: " + samplesProcessed);
 
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
         performances.add(getBestMLPParams());

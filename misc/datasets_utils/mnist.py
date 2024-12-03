@@ -22,7 +22,7 @@ class MNIST:
         self._image_two_saved = False
         self._image_three_saved = False
 
-    def generate(self, output_path, drift_start, drift_end=None, visualize=False):
+    def generate(self, output_path, drift_start, drift_end=None, visualize=False, line_number_to_end_at=None):
         with open(self.dataset_path, 'r') as csv_file, open(output_path, 'w') as output_csv_file:
             reader = csv.reader(csv_file)
             self._write_output_file_header(output_csv_file)
@@ -42,6 +42,10 @@ class MNIST:
                 self._save_to_visualize_if_applicable(visualize, images_to_visualize, rotated_image, label, current_percentage)
                 rotated_list = rotated_image.flatten().tolist()
                 self._write_output_file_line(output_csv_file, rotated_list, label)
+
+                if line_number_to_end_at:
+                    if line_number == line_number_to_end_at:
+                        break
 
             if visualize:
                 for image in images_to_visualize:
@@ -126,6 +130,9 @@ if __name__ == "__main__":
     # download MNIST for example from here: https://git-disl.github.io/GTDLBench/datasets/mnist_datasets/
     # we use dataset already converted to a csv file
     # the format is: label, pix-11, pix-12, pix-13, ...
+    # mnist = MNIST(_MNIST_PATH)
+    # mnist.generate("./datasets/mnist_grad.csv", drift_start=0.50, drift_end=0.75, visualize=True)
+
     mnist = MNIST(_MNIST_PATH)
-    mnist.generate("./datasets/mnist_grad.csv", drift_start=0.50, drift_end=0.75, visualize=True)
+    mnist.generate("./datasets/mnist_grad_mniejszy.csv", drift_start=0.25, drift_end=0.30, visualize=True, line_number_to_end_at=24_000)
 

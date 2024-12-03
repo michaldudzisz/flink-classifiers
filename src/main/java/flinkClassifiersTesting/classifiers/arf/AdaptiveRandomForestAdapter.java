@@ -22,6 +22,8 @@ public class AdaptiveRandomForestAdapter extends BaseClassifierClassifyAndTrain 
     private final AdaptiveRandomForest arf;
     private Instances datasetProperties = null;
 
+    int samplesProcessed = 0;
+
     public AdaptiveRandomForestAdapter(
             int classNumber,
             int attributesNumber,
@@ -55,6 +57,9 @@ public class AdaptiveRandomForestAdapter extends BaseClassifierClassifyAndTrain 
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         Instance moaInstance = mapExampleToInstance(example, datasetProperties);
         double[] votesForEachClass = arf.getVotesForInstance(moaInstance);
+
+        samplesProcessed++;
+        System.out.println("i: " + samplesProcessed);
 
         int predictedClass = 0;
         try {
