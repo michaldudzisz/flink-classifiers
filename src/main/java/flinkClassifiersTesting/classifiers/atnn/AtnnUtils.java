@@ -756,18 +756,20 @@ class Model {
         }
     }
 
-
-
+    public RealVector predict(RealVector feature) {
+        forward_propagation(model, feature);
+        Map<Integer, RealVector> modelOutput = get_model_output();
+        return modelOutput.get(activeBranch);
+    }
 
     public RealVector train_model(RealVector feature, RealVector label) {
-        Node model1 = model;
-        forward_propagation(model1, feature);
+        forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
         RealVector result = modelOutput.get(activeBranch);
         update_branch_predict_loss(modelOutput, label);
         update_loss_statistics();
-        back_propagation(model1, label);
-        update_model(model1);
+        back_propagation(model, label);
+        update_model(model);
         List<Node> activeNodeList = get_active_node_list();
         update_weight_by_loss(activeNodeList, label);
         trainTimes = trainTimes + 1;

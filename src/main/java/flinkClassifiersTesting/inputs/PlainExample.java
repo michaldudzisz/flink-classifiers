@@ -14,4 +14,11 @@ public class PlainExample extends BaseExample {
     public void setPlainClass(String plainClass) {
         this.plainClass = plainClass;
     }
+
+    @Override
+    public String toString() {
+        return "PlainExample{" +
+                "plainClass='" + plainClass + '\'' +
+                '}';
+    }
 }

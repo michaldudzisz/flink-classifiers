@@ -25,16 +25,21 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     int statisticsLen = 100;
 
-    int featureLen = 784;
+    // mnist
+//    int featureLen = 784;
+//    int classNum = 10;
+
+    // elec
+    int featureLen = 6;
+    int classNum = 2;
+
+
     int hNeuronNum = 256;
-    int classNum = 10;
 
     int predictRightNumber = 0;
     int exampleNumber = 0;
 
     Model model;
-
-    double[] lastResults = new double[classNum];
 
     public Atnn() {
         model = new Model(featureLen, hNeuronNum, classNum);
@@ -48,7 +53,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         // przyjmuje i zwraca performance
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        lastResults = model.train_model(feature, label).toArray(); // todo zmienić, bo dwa razy sie bedzie wykonywalo
+        model.train_model(feature, label).toArray();
         return performances;
     }
 
@@ -70,7 +75,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         System.out.println("i: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        double[] result = lastResults; // model.train_model(feature, label).toArray(); // todo zmienić, bo dwa razy sie bedzie wykonywalo
+        double[] result = model.predict(feature).toArray();
         int predictedClass = IntStream.range(0, result.length).reduce((i, j) -> result[i] > result[j] ? i : j).getAsInt();
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
         return new Tuple2<>(predictedClass, performances);
@@ -87,6 +92,6 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         System.out.println("bi: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        lastResults = model.train_model(feature, label).toArray(); // todo zmienić, bo dwa razy sie bedzie wykonywalo
+        model.train_model(feature, label).toArray(); // todo zmienić, bo dwa razy sie bedzie wykonywalo
     }
 }
