@@ -125,7 +125,7 @@ public class AtnnUtils {
 
         // HAK 1:
         double[] expData = Arrays.stream(x.toArray()).map(Math::exp)
-                .map(v -> Double.isFinite(v) ? v : Double.MAX_VALUE) // todo HAK 1 - może prowadzić do błędów, bo takie same max value podzielone dadza jeden
+                .map(v -> Double.isFinite(v) ? v : Double.MAX_VALUE) // todo HAK 1 - może prowadzić do nieefektywnego uczenia, bo takie same max value podzielone dadza jeden
                 .toArray();
 
 
@@ -133,25 +133,11 @@ public class AtnnUtils {
         double sumExpTmp = Arrays.stream(expData).sum();
         double sumExp = Double.isFinite(sumExpTmp) ? sumExpTmp + epsilon : Double.MAX_VALUE;
 
-        double[] result = Arrays.stream(expData).map(e -> e / sumExp + epsilon).toArray();
+        double[] result = Arrays.stream(expData).map(elem -> elem / sumExp + epsilon).toArray();
 
         // todo w oryginalnej funkcji to też nie działa XD
 
 
-        // todo POC: - nie działa
-//        Exp exp = new Exp();
-//        expData = Arrays.stream(x.toArray()).map(exp::value).toArray();
-//        double sumExp1 = Arrays.stream(expData).sum();
-//        result = Arrays.stream(expData).map(e -> e / sumExp1).toArray();
-
-//        for (double d : expData) {
-//            if (Double.isNaN(d)) {
-//                throw new RuntimeException("expData: " + Arrays.toString(expData));
-//            }
-//        }
-//        if (Double.isNaN(sumExp)) {
-//            throw new RuntimeException("sumExp1: " + sumExp);
-//        }
         for (double d : result) {
             if (Double.isNaN(d)) { // todo tu leci
                 throw new RuntimeException(
@@ -234,7 +220,7 @@ public class AtnnUtils {
 class Node {
     int branchType = 0;
     boolean isShare = false;
-    double learnRate = 0.02;
+    double learnRate = 0.0006; // 0.02
     int hNeuronNum;
     int cNeuronNum;
     boolean isRootNode = false;
@@ -256,7 +242,7 @@ class Node {
     int depth = 0;
     int trainTimes = 0;
     double reduction = 0.999;
-    double minLR = 0.001;
+    double minLR = 0.0005; // 0.001
     double lastPredictLoss = 0;
     RealMatrix squareGrad_hW = null;
     RealVector squareGrad_hb = null;
@@ -353,7 +339,7 @@ class Model {
     Map<Integer, List<Node>> nodeList = new HashMap<>();
     List<Node> activeNodeList = new ArrayList<>();
     Map<Integer, List<Double>> lossList = new HashMap<>();
-    int lossLen = 1000;
+    int lossLen = 500; // było 1000, w artykule napisali o 500
     int splitLen = 50;
     Map<Integer, Map<String, Double>> lossStatisticsList = new HashMap<>();
     List<Integer> branchList = new ArrayList<>();
@@ -973,10 +959,9 @@ class Model {
     }
 
     public RealVector predict(RealVector feature) {
-//        if (trainTimes == 2)
-//            printModelStructure();
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
+        System.out.println("activeNodeList.size(): " + activeNodeList.size());
         return modelOutput.get(activeBranch);
     }
 
@@ -1037,8 +1022,8 @@ class Model {
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
         RealVector result = modelOutput.get(activeBranch);
-        System.out.println("label: " + Arrays.toString(label.toArray()));
-        System.out.println("result: " + Arrays.toString(result.toArray()));
+//        System.out.println("label: " + Arrays.toString(label.toArray()));
+//        System.out.println("result: " + Arrays.toString(result.toArray()));
         update_branch_predict_loss(modelOutput, label);
         update_loss_statistics();
         back_propagation(model, label);

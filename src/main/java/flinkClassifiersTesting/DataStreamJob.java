@@ -72,16 +72,16 @@ public class DataStreamJob {
 //                new AdaptiveRandomForestClassifierParams(30, 6.0f, 60)
 //        );
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AdaptiveRandomForestProcessFactory.arf(arfParams));
+//
+        List<AtnnClassifierParams> atnnParams = List.of(
+                new AtnnClassifierParams()
+        );
+        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
 
 //        List<CandClassifierParams> candParams = List.of(
 //                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, false)
 //        );
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
 
-
-        List<AtnnClassifierParams> atnnParams = List.of(
-                new AtnnClassifierParams()
-        );
-        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
     }
 }

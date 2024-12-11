@@ -19,7 +19,7 @@ public class AtnnProcessFactory {
                 return new AtnnProcessFunction(name, dataset, samplesLimit, classEncoder) {
                     @Override
                     protected Atnn createClassifier() {
-                        return new Atnn();
+                        return new Atnn(classEncoder);
                     }
                 };
             }

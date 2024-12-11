@@ -26,8 +26,8 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     int statisticsLen = 100;
 
     // mnist
-    int featureLen = 784;
-    int classNum = 10;
+//    int featureLen = 784;
+//    int classNum = 10;
 
     // elec
 //    int featureLen = 6;
@@ -37,20 +37,17 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 //    int featureLen = 3;
 //    int classNum = 2;
 
-    // sea grad
-//    int featureLen = 3;
-//    int classNum = 10;
+    int featureLen;
+    int classNum;
 
     int hNeuronNum = 256;
 
-    int predictRightNumber = 0;
     int exampleNumber = 0;
 
     Model model;
 
-    public Atnn() {
-        model = new Model(featureLen, hNeuronNum, classNum);
-        model.init_node_weight();
+    public Atnn(Map<String, Integer> classEncoder) {
+        classNum = classEncoder.keySet().size(); // classes may be defined not as in class encoder, can fix it later
 //        lastResults[0] = 0.001;
     }
 
@@ -58,6 +55,11 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     @Override
     protected ArrayList<Tuple2<String, Object>> trainImplementation(Example example, int predictedClass, ArrayList<Tuple2<String, Object>> performances) {
         // przyjmuje i zwraca performance
+        if (model == null) {
+            featureLen = example.getAttributes().length;
+            model = new Model(featureLen, hNeuronNum, classNum);
+            model.init_node_weight();
+        }
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
         model.train_model(feature, label).toArray();
@@ -78,6 +80,11 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     @Override
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
+        if (model == null) {
+            featureLen = example.getAttributes().length;
+            model = new Model(featureLen, hNeuronNum, classNum);
+            model.init_node_weight();
+        }
         exampleNumber += 1;
         System.out.println("i: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
@@ -95,6 +102,11 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     @Override
     public void bootstrapTrainImplementation(Example example) {
+        if (model == null) {
+            featureLen = example.getAttributes().length;
+            model = new Model(featureLen, hNeuronNum, classNum);
+            model.init_node_weight();
+        }
         exampleNumber += 1;
         System.out.println("bi: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());

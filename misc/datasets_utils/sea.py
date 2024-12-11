@@ -9,7 +9,7 @@ class SEA:
         self.bound = 10
         self.thresholds_percentages = [0.10, 0.16, 0.22, 0.28, 0.34, 0.40, 0.46, 0.52, 0.58] # gives 10 classes
         self.thresholds = list(map(lambda x: x * 2 * self.bound, self.thresholds_percentages))
-        self.dataset_length = 100_000
+        self.dataset_length = 30_000 # 100_000
         random.seed(seed)
 
     def generate_gradual(self) -> pd.DataFrame:
@@ -57,8 +57,11 @@ class SEA:
             "x3": np.random.rand(self.dataset_length) * self.bound,
         }
 
-        drift_points_percentages = [0.25, 0.50, 0.75] # four concepts
-        concept_thetas = [8, 9, 7, 9.5]
+        # drift_points_percentages = [0.25, 0.50, 0.75] # four concepts
+        # concept_thetas = [8, 9, 7, 9.5]
+
+        drift_points_percentages = [0.49, 0.50, 0.51] # four concepts
+        concept_thetas = [8, 8.1, 12, 12.1]
 
         classes = []
         for i in range(0, self.dataset_length):
@@ -105,9 +108,9 @@ def save_to_flink_csv(data, path_to_file):
 if __name__ == "__main__":
     sea = SEA()
 
-    gradual_dataset = sea.generate_gradual()
-    save_to_normal_csv(gradual_dataset, './datasets/sea_grad_norm.csv')
-    save_to_flink_csv(gradual_dataset, './datasets/sea_grad.csv')
+    # gradual_dataset = sea.generate_gradual()
+    # save_to_normal_csv(gradual_dataset, './datasets/sea_grad_norm.csv')
+    # save_to_flink_csv(gradual_dataset, './datasets/sea_grad.csv')
 
     abrupt_dataset = sea.generate_abrupt()
     save_to_normal_csv(abrupt_dataset, './datasets/sea_abr_norm.csv')
