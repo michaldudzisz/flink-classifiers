@@ -1,14 +1,10 @@
 package flinkClassifiersTesting.classifiers.atnn;
 
 import java.util.*;
-import java.nio.*;
 import java.util.stream.Collectors;
 //import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.math3.linear.*;
 
-
-import java.io.FileWriter;
-import java.io.IOException;
 
 import static flinkClassifiersTesting.classifiers.atnn.AtnnUtils.*;
 import static org.apache.commons.math3.linear.MatrixUtils.*;
@@ -17,6 +13,9 @@ public class AtnnUtils {
     // Creates a random matrix with given dimensions
     public static RealMatrix createRandomMatrix(int m, int n) {
         double limit = Math.sqrt(6.0 / (m + n));
+        if (Double.isNaN(limit)) {
+            throw new RuntimeException("o kurde Nan, x: " + limit);
+        }
         Random random = new Random();
         double[][] matrix = new double[m][n];
         for (int i = 0; i < m; i++) {
@@ -28,15 +27,15 @@ public class AtnnUtils {
     }
 
     // Standardizes a matrix
-    public static RealMatrix standardization(RealMatrix matrix) { // todo czy to dobry kod w ogóle? to czata
-        double mean = Arrays.stream(matrix.getData()).flatMapToDouble(Arrays::stream).average().orElse(0);
-        double std = Math.sqrt(Arrays.stream(matrix.getData())
-                .flatMapToDouble(Arrays::stream)
-                .map(x -> (x - mean) * (x - mean))
-                .average().orElse(0));
-        double epsilon = 1e-7;
-        return matrix.scalarAdd(-mean).scalarMultiply(1.0 / (std + epsilon));
-    }
+//    public static RealMatrix standardization(RealMatrix matrix) { // todo czy to dobry kod w ogóle? to czata
+//        double mean = Arrays.stream(matrix.getData()).flatMapToDouble(Arrays::stream).average().orElse(0);
+//        double std = Math.sqrt(Arrays.stream(matrix.getData())
+//                .flatMapToDouble(Arrays::stream)
+//                .map(x -> (x - mean) * (x - mean))
+//                .average().orElse(0));
+//        double epsilon = 1e-7;
+//        return matrix.scalarAdd(-mean).scalarMultiply(1.0 / (std + epsilon));
+//    }
 
 
     public static double calculateStandardDeviation(List<Double> numbers) {
@@ -55,6 +54,9 @@ public class AtnnUtils {
                 .orElse(0.0);
 
         // Zwracanie pierwiastka kwadratowego z wariancji (odchylenie standardowe)
+        if (variance < 0 || Double.isNaN(variance)) {
+            throw new RuntimeException("o kurde Nan, x: " + variance);
+        }
         return Math.sqrt(variance);
     }
 
@@ -67,6 +69,9 @@ public class AtnnUtils {
                 .map(x -> (x - mean) * (x - mean))
                 .sum();
         double std = Math.sqrt(partialSum / vectorLen);
+        if (Double.isNaN(std)) { // todo stad leci
+            throw new RuntimeException("o kurde Nan, vector: " + vector);
+        }
         double epsilon = 1e-7;
         return vector.mapAdd(-mean).mapMultiply(1.0 / (std + epsilon));
     }
@@ -93,14 +98,82 @@ public class AtnnUtils {
             norm1 += farr1[i] * farr1[i];
             norm2 += farr2[i] * farr2[i];
         }
+
+
+        if (Double.isNaN((Math.sqrt(norm1)))) {
+            throw new RuntimeException("o kurde Nan, (Math.sqrt(norm1): " + (Math.sqrt(norm1)));
+        }
+        if (Double.isNaN((Math.sqrt(norm2)))) {
+            throw new RuntimeException("o kurde Nan, (Math.sqrt(norm2): " + (Math.sqrt(norm2)));
+        }
+        if ((Math.sqrt(norm1) * Math.sqrt(norm2) == 0.0)) {
+            throw new RuntimeException("o kurde zero, (Math.sqrt(norm1) * Math.sqrt(norm2): " + (Math.sqrt(norm1) * Math.sqrt(norm2)));
+        }
+
+
+
         return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+
+
     }
 
     // Softmax function
     public static RealVector softmax(RealVector x) {
-        double[] expData = Arrays.stream(x.toArray()).map(Math::exp).toArray();
-        double sumExp = Arrays.stream(expData).sum();
-        double[] result = Arrays.stream(expData).map(e -> e / sumExp).toArray();
+//        double[] expData = Arrays.stream(x.toArray()).map(Math::exp).toArray();
+        // HAK 0: double epsilon = 1e-7;
+        double epsilon = 1e-7;
+
+        // HAK 1:
+        double[] expData = Arrays.stream(x.toArray()).map(Math::exp)
+                .map(v -> Double.isFinite(v) ? v : Double.MAX_VALUE) // todo HAK 1 - może prowadzić do błędów, bo takie same max value podzielone dadza jeden
+                .toArray();
+
+
+        // HAK 2:
+        double sumExpTmp = Arrays.stream(expData).sum();
+        double sumExp = Double.isFinite(sumExpTmp) ? sumExpTmp + epsilon : Double.MAX_VALUE;
+
+        double[] result = Arrays.stream(expData).map(e -> e / sumExp + epsilon).toArray();
+
+        // todo w oryginalnej funkcji to też nie działa XD
+
+
+        // todo POC: - nie działa
+//        Exp exp = new Exp();
+//        expData = Arrays.stream(x.toArray()).map(exp::value).toArray();
+//        double sumExp1 = Arrays.stream(expData).sum();
+//        result = Arrays.stream(expData).map(e -> e / sumExp1).toArray();
+
+//        for (double d : expData) {
+//            if (Double.isNaN(d)) {
+//                throw new RuntimeException("expData: " + Arrays.toString(expData));
+//            }
+//        }
+//        if (Double.isNaN(sumExp)) {
+//            throw new RuntimeException("sumExp1: " + sumExp);
+//        }
+        for (double d : result) {
+            if (Double.isNaN(d)) { // todo tu leci
+                throw new RuntimeException(
+                        ",\nx: " + x +
+                        ",\nexpData: " + Arrays.toString(expData) +
+                        ",\nsumExp: " + sumExp +
+                        "\nresult: " + Arrays.toString(result)
+                        );
+            }
+        }
+
+        for (double d : result) {
+            if (Double.isInfinite(d)) { // todo tu leci
+                throw new RuntimeException(
+                        ",\nx: " + x +
+                                ",\nexpData: " + Arrays.toString(expData) +
+                                ",\nsumExp: " + sumExp +
+                                "\nresult: " + Arrays.toString(result)
+                );
+            }
+        }
+
         return createRealVector(result);
     }
 
@@ -112,6 +185,12 @@ public class AtnnUtils {
         for (int i = 0; i < yHatArr.length; i++) {
             sum += yArr[i] * Math.log(yHatArr[i]);
         }
+
+        if (Double.isNaN(sum))
+            throw new RuntimeException("sum: " + sum +
+                    ",\nyHat: " + yHat + // todo problemem jest to, że tu bywa zero
+                    ",\ny: " + y);
+
         return -sum;
     }
 
@@ -200,6 +279,11 @@ class Node {
 
     private void init_b() {
         hb = new ArrayRealVector(hNeuronNum);
+        for (double d : hb.toArray()) {
+            if (Double.isNaN(d)) {
+                throw new RuntimeException("hb: " + hb);
+            }
+        }
         cb = new ArrayRealVector(cNeuronNum);
         Fisher_hb = new ArrayRealVector(hNeuronNum);
         squareGrad_hb = new ArrayRealVector(hNeuronNum);
@@ -231,6 +315,13 @@ class Node {
     // ReLU activation function
     public RealVector relu(RealVector x) {
         double[] data = x.toArray();
+
+        for (double d : data) {
+            if (Double.isNaN(d)) {
+                throw new RuntimeException("x: " + x);
+            }
+        }
+
         for (int i = 0; i < data.length; i++) {
             data[i] = Math.max(0, data[i]);
         }
@@ -308,6 +399,9 @@ class Model {
         child.depth = child.parent.depth + 1;
         child.init_weight();
         child.weight = weight;
+        if (Double.isNaN(weight)) {
+            throw new RuntimeException("weight: " + weight);
+        }
         parentNode.childList.add(child);
         if (!nodeList.containsKey(branchType)) {
             nodeList.put(branchType, new ArrayList<>());
@@ -320,6 +414,9 @@ class Model {
         double avgWeight = 1.0 / activeNodeList.size();
         for (Node node : activeNodeList) {
             node.weight = avgWeight;
+            if (Double.isNaN(avgWeight)) {
+                throw new RuntimeException("weight: " + avgWeight);
+            }
         }
     }
 
@@ -403,13 +500,43 @@ class Model {
 //            if (1 == 1)
 //                throw new RuntimeException("Cw ma size " + node.cW.getRowDimension() + " " + node.cW.getColumnDimension() + "hideOutput ma size" + node.hideOutput.getDimension());
             node.classifierInput = node.cW.operate(node.hideOutput).add(node.cb); // cw ma 256 na 256
+//            for (double d : node.cb.toArray()) {
+//                if (Double.isNaN(d)) {
+//                    throw new RuntimeException("node.cb: " + node.cb);
+//                }
+//            }
+            for (double d : node.cb.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.cb: " + node.cb);
+                }
+            }
+            for (double d : node.classifierInput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.classifierInput: " + node.classifierInput + ", cW: " + node.cW); // todo tu jest w cW NaN
+                }
+            }
             node.classifierOutput = softmax(node.classifierInput);
+            for (double d : node.classifierOutput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.classifierOutput: " + node.classifierOutput); // todo tu jest nan
+                }
+            }
         } else {
-            node.hideInput = node.hW.operate(feature).add(node.hb);
+            node.hideInput = node.hW.operate(feature).add(node.hb); // todo node.hb to same NaNy
             node.hideOutput = node.relu(node.hideInput);
 
             node.classifierInput = node.cW.operate(node.hideOutput).add(node.cb);
+            for (double d : node.classifierInput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.classifierInput: " + node.classifierInput); // todo to nie jest nan
+                }
+            }
             node.classifierOutput = softmax(node.classifierInput);
+            for (double d : node.classifierOutput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.classifierOutput: " + node.classifierOutput);
+                }
+            }
         }
 
         for (Node child : node.childList) {
@@ -428,17 +555,45 @@ class Model {
 
         node.lastPredictLoss = AtnnUtils.cross_entropy(node.classifierOutput, trueLabel);
         node.dev_cInput = node.classifierOutput.subtract(trueLabel).mapMultiply(node.weight);
+        for (double d : node.classifierOutput.toArray()) {
+            if (Double.isInfinite(d)) {
+                throw new RuntimeException("node.classifierOutput: " + node.classifierOutput);
+            }
+        }
+//        if (Double.isNaN(node.weight)) {
+//            throw new RuntimeException("node.weight: " + node.weight);
+//        }
+        for (double d : node.classifierOutput.toArray()) {
+            if (Double.isNaN(d)) {
+                throw new RuntimeException("node.classifierOutput: " + node.classifierOutput + ", node.dev_cInput: " + node.dev_cInput); // todo tu jest jeden nan
+            }
+        }
         node.dev_cW = node.dev_cInput.outerProduct(node.hideOutput);
+        checkIfVectorContainsNaN(node.dev_cInput, "node.classifierOutput: " + node.classifierOutput + ",\nnode.weight: " + node.weight);
+        checkIfVectorContainsNaN(node.hideOutput);
+
+        checkIfMatrixContainsNaN(node.dev_cW, "node.dev_cInput: " + node.dev_cInput + ",\nnode.hideOutput: " + node.hideOutput
+                + "\nnode.classifierOutput: " + node.classifierOutput +
+                "\n"); // todo dev c input ma infinity i to stad
+
 
         if (node.isRootNode) {
             return;
         }
 
+        for (double d : node.dev_cInput.toArray()) {
+            if (Double.isNaN(d)) {
+                throw new RuntimeException("node.dev_cInput: " + node.dev_cInput); // todo to sa same nany
+            }
+        }
+
         node.dev_hInput = node.cW.transpose().operate(node.dev_cInput).ebeMultiply(node.dev_relu(node.hideInput)); // todo chyba zmyśliłem tę operację ebe, nie wiem, jaka powinna być
         // todo wydaje mi się, że to jest dobra operacja jednak
-//        if (1 == 1) {
-//            throw new RuntimeException("node.cW.transpose(): " + node.cW.transpose().getRowDimension() + " " + node.cW.transpose().getColumnDimension() + " node.hideInput: " + node.hideInput.getDimension());
-//        }
+        for (double d : node.dev_hInput.toArray()) {
+            if (Double.isNaN(d)) {
+                throw new RuntimeException("node.dev_hInput: " + node.dev_hInput); // todo tu pierwszy raz dev h input to same nany
+            }
+        }
 
         node.dev_hW = node.dev_hInput.outerProduct(node.parent.hideOutput);
 
@@ -463,6 +618,11 @@ class Model {
         if (node.branchType != activeBranch) {
             node.dev_cW = node.dev_cW.scalarMultiply(0);
             node.dev_hInput = node.dev_hInput.mapMultiply(0);
+            for (double d : node.dev_hInput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.dev_hInput: " + node.dev_hInput);
+                }
+            }
             node.dev_hW = node.dev_hW.scalarMultiply(0);
         }
 
@@ -471,6 +631,11 @@ class Model {
                 continue;
             RealVector child_dev_hInput = child.hW.transpose().operate(child.dev_hInput).ebeMultiply(node.dev_relu(node.hideInput)); // todo znowu nie jestem pewien operacji ebe
             node.dev_hInput = node.dev_hInput.add(child_dev_hInput);
+            for (double d : node.dev_hInput.toArray()) {
+                if (Double.isNaN(d)) {
+                    throw new RuntimeException("node.dev_hInput: " + node.dev_hInput);
+                }
+            }
         }
 
         node.dev_hW = node.dev_hInput.outerProduct(node.parent.hideOutput);
@@ -574,17 +739,38 @@ class Model {
 
         if (node.isRootNode) {
             node.cW = node.cW.subtract(node.dev_cW.scalarMultiply(lr));
+            checkIfMatrixContainsNaN(node.dev_cW, ""); // tu bylo
+            checkIfMatrixContainsNaN(node.cW, ""); // tu bylo
             node.cb = node.cb.subtract(node.dev_cInput.mapMultiply(lr));
         } else {
             if (node.isShare) {
                 node.hW = node.hW.subtract(node.dev_hW.add((node.Fisher_hW.preMultiply(node.hW.subtract(node.lastConcept_hW))).scalarMultiply(lamda)).scalarMultiply(lr)); // todo tak samo nie jestem pewien preMultiply
                 node.cW = node.cW.subtract(node.dev_cW.scalarMultiply(lr));
+                checkIfMatrixContainsNaN(node.cW, "");
                 node.hb = node.hb.subtract(node.dev_hInput.add(node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb))).mapMultiply(lr));
+                for (double d : node.hb.toArray()) {
+                    if (Double.isNaN(d)) {
+                        throw new RuntimeException("node.hb: " + node.hb);
+                    }
+                }
                 node.cb = node.cb.subtract(node.dev_cInput.mapMultiply(lr));
             } else {
                 node.hW = node.hW.subtract(node.dev_hW.scalarMultiply(lr));
                 node.cW = node.cW.subtract(node.dev_cW.scalarMultiply(lr));
+                checkIfMatrixContainsNaN(node.cW, "");
                 node.hb = node.hb.subtract(node.dev_hInput.mapMultiply(lr));
+
+                for (double d : node.dev_hInput.toArray()) {
+                    if (Double.isNaN(d)) {
+                        throw new RuntimeException("node.dev_hInput: " + node.dev_hInput); // todo to same nany sa
+                    }
+                }
+
+                for (double d : node.hb.toArray()) { // todo tutaj pierwszy raz node.hb to są same NaNy
+                    if (Double.isNaN(d)) {
+                        throw new RuntimeException("node.hb: " + node.hb);
+                    }
+                }
                 node.cb = node.cb.subtract(node.dev_cInput.mapMultiply(lr));
             }
         }
@@ -597,6 +783,33 @@ class Model {
         node.dev_cW = null;
         node.dev_hInput = null;
         node.dev_cInput = null;
+    }
+
+    private static void checkIfMatrixContainsNaN(RealMatrix matrix, String msg) {
+        for (int i = 0; i < matrix.getRowDimension(); i++) {
+            for (int j = 0; j < matrix.getColumnDimension(); j++) {
+                if (Double.isNaN(matrix.getEntry(i, j))) {
+                    throw new RuntimeException("matrix: " + matrix + "\n" + msg);
+                }
+            }
+        }
+    }
+
+    private static void checkIfVectorContainsNaN(RealVector vector) {
+        for (int i = 0; i < vector.getDimension(); i++) {
+            if (Double.isNaN(vector.getEntry(i))) {
+                throw new RuntimeException("vector: " + vector);
+            }
+        }
+    }
+
+
+    private static void checkIfVectorContainsNaN(RealVector vector, String msg) {
+        for (int i = 0; i < vector.getDimension(); i++) {
+            if (Double.isNaN(vector.getEntry(i))) {
+                throw new RuntimeException("vector: " + vector + ",\n" + msg);
+            }
+        }
     }
 
 
@@ -715,6 +928,9 @@ class Model {
         List<Node> nodes = get_active_node_list();
         for (Node node : nodes) {
             node.weight = 1.0 / nodes.size();
+            if (Double.isNaN(node.weight)) {
+                throw new RuntimeException("node.weight: " + node.weight);
+            }
         }
     }
 
@@ -757,15 +973,72 @@ class Model {
     }
 
     public RealVector predict(RealVector feature) {
+//        if (trainTimes == 2)
+//            printModelStructure();
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
         return modelOutput.get(activeBranch);
     }
 
+    private void printModelStructure() {
+        System.out.println("\n*** Model structure ***\n");
+//        int featureNum;
+//        int hNeuronNum;
+//        int cNeuronNum;
+//        double beta = 0.99;
+//        double smooth = 0.2;
+//        int trainTimes = 0;
+//        int activeBranch = 0;
+//        int branchNum = 0;
+//        int maxBranchNum = 20;
+//        Node model = null;
+//        Map<Integer, List<Node>> nodeList = new HashMap<>();
+//        List<Node> activeNodeList = new ArrayList<>();
+//        Map<Integer, List<Double>> lossList = new HashMap<>();
+//        int lossLen = 1000;
+//        int splitLen = 50;
+//        Map<Integer, Map<String, Double>> lossStatisticsList = new HashMap<>();
+//        List<Integer> branchList = new ArrayList<>();
+//        boolean driftAlert = false;
+//        int alertNum = 0;
+//        int lastDriftTime = 0;
+//        int lamda = 5000;
+//        String dataSet = null;
+//        int confid = 3;
+//        int trainType = 0;
+
+//        Node root = model;
+        for (Node node : activeNodeList) {
+            System.out.println("\nNode:\nnode.branchType: " + node.branchType + ", node.depth: " + node.depth);
+            System.out.println("hW: ");
+            System.out.println(node.hW);
+            System.out.println("hb: ");
+            System.out.println(node.hb);
+            System.out.println("cW: ");
+            System.out.println(node.cW);
+            System.out.println("cb: ");
+            System.out.println(node.cb);
+            System.out.println("\n");
+        }
+        System.out.println("\n*** Model structure end ***\n");
+    }
+
+//    private void printNodeStructure(Node node) {
+//        System.out.println("\n*** Node structure ***\n");
+//
+//        for (Node child : node.childList) {
+//            if (!driftAlert && child.branchType != activeBranch && child.branchType != 0)
+//                continue;
+//            printNodeStructure(child);
+//        }
+//    }
+
     public RealVector train_model(RealVector feature, RealVector label) {
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
         RealVector result = modelOutput.get(activeBranch);
+        System.out.println("label: " + Arrays.toString(label.toArray()));
+        System.out.println("result: " + Arrays.toString(result.toArray()));
         update_branch_predict_loss(modelOutput, label);
         update_loss_statistics();
         back_propagation(model, label);
@@ -797,6 +1070,11 @@ class Model {
         for (Node node : nodeList) {
             losses.add(node.lastPredictLoss);
         }
+
+        if (losses.stream().anyMatch(y -> Double.isNaN(y))) {
+            throw new RuntimeException("losses: " + losses);
+        }
+
         double M = losses.stream().reduce(0.0, Double::sum);
         losses = losses.stream().map(loss -> loss / M).collect(Collectors.toList());
         double min_loss = losses.stream().reduce(0.0, Double::min);
@@ -804,17 +1082,36 @@ class Model {
         double range_of_loss = (max_loss - min_loss) + 1e-7;
         losses = losses.stream().map(loss -> (loss - min_loss) / range_of_loss).collect(Collectors.toList());
 
+        if (losses.stream().anyMatch(y -> Double.isNaN(y))) {
+            throw new RuntimeException("losses: " + losses);
+        }
+
         for (int i = 0; i < nodeList.size(); i++) {
             double newWeight = nodeList.get(i).weight * (Math.pow(beta, losses.get(i)));
+            if (losses.stream().anyMatch(y -> Double.isNaN(y))) {
+                throw new RuntimeException("losses: " + losses);
+            }
             if (newWeight < smooth / nodeList.size()) {
                 newWeight = smooth / nodeList.size();
             }
             nodeList.get(i).weight = newWeight;
+            if (Double.isNaN(newWeight)) {
+                throw new RuntimeException("newWeight: " + newWeight +
+                        ",\nnodeList.size(): " + nodeList.size() +
+                        ",\nsmooth: " + smooth +
+                        ",\nnodeList.get(i).weight: " + nodeList.get(i).weight +
+                        ",\n(Math.pow(beta, losses.get(i))): " + (Math.pow(beta, losses.get(i))) +
+                        ",\nlosses.get(i): " + losses.get(i) + // todo losses mamw sobie nan
+                        ",\nbeta: " + beta);
+            }
             zt = zt + newWeight;
         }
 
         for (Node node : nodeList) {
             node.weight = node.weight / zt;
+            if (Double.isNaN(node.weight)) {
+                throw new RuntimeException("node.weight: " + node.weight);
+            }
         }
     }
 

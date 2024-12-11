@@ -53,13 +53,14 @@ public class DataStreamJob {
     public static void main(String[] args) throws Exception {
         String basePath = getBaseDirectory();
 //        String dataset = "elec-maly";
-        String dataset = "elec";
+//        String dataset = "elec";
 //        String dataset = "sea_abr";
 //        String dataset = "sea_grad";
 //        String dataset = "mnist_grad";
 //        String dataset = "elec-malutki";
-//        String dataset = "mnist_grad_mniejszy";
+        String dataset = "mnist_grad_mniejszy";
 //        String dataset = "mnist_grad_malutki";
+//        String dataset = "sea_grad";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
 //        long bootstrapSamplesLimit = 500L;
         long bootstrapSamplesLimit = 0L;

@@ -26,13 +26,20 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     int statisticsLen = 100;
 
     // mnist
-//    int featureLen = 784;
-//    int classNum = 10;
+    int featureLen = 784;
+    int classNum = 10;
 
     // elec
-    int featureLen = 6;
-    int classNum = 2;
+//    int featureLen = 6;
+//    int classNum = 2;
 
+    // sea abr
+//    int featureLen = 3;
+//    int classNum = 2;
+
+    // sea grad
+//    int featureLen = 3;
+//    int classNum = 10;
 
     int hNeuronNum = 256;
 
@@ -59,7 +66,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     private RealVector oneHotEncodeExample(Example example) {
         int classNum = example.getMappedClass();
-        double[] encoded = new double[this.classNum]; // todo dla eleca dwie, potem rozszerzymy
+        double[] encoded = new double[this.classNum];
         for (int i = 0; i < this.classNum; i++) {
             if (classNum == i)
                 encoded[i] = 1.0;
