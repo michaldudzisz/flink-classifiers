@@ -11,6 +11,9 @@ import math
 # the format is: label, pix-11, pix-12, pix-13, ...
 _MNIST_PATH = "datasets/mnist.csv"
 
+
+# TODO zrobić normalizacje datasetu, może wtedy bedzie to lepiej działało i nie będzie wywalało Inf w ATNN
+
 class MNIST:
 
     _ATTRIBUTES = 28 * 28
@@ -51,6 +54,36 @@ class MNIST:
                 for image in images_to_visualize:
                     cv2.imshow(f"Image", image)
                     cv2.waitKey(0)
+
+    def generate_abrupt_atnn_like(self, output_path, drift_start, drift_end=None, visualize=False, line_number_to_end_at=None):
+        with open(self.dataset_path, 'r') as csv_file, open(output_path, 'w') as output_csv_file:
+            reader = csv.reader(csv_file)
+            self._write_output_file_header(output_csv_file)
+            last_percentage = 0
+            for line_number, row in enumerate(reader):
+                if len(row) != self._ATTRIBUTES + 1: # attributes + one class label
+                    raise Exception(f"Line {line_number} invalid, incorrect number of pixels.")
+                label = row[0]
+                values = np.array(row[1:], dtype=np.uint8)
+                image = values.reshape((28, 28))
+                current_percentage = self._get_current_percentage(line_number)
+                angle = self._rotation_angle(drift_start=drift_start, percentage=current_percentage, drift_end=drift_end)
+                self._log_progress(last_percentage, current_percentage, angle)
+                last_percentage = current_percentage
+                rotated_image = self._rotate_image(image, angle)
+                self._save_to_visualize_if_applicable(visualize, images_to_visualize, rotated_image, label, current_percentage)
+                rotated_list = rotated_image.flatten().tolist()
+                self._write_output_file_line(output_csv_file, rotated_list, label)
+
+                if line_number_to_end_at:
+                    if line_number == line_number_to_end_at:
+                        break
+
+            if visualize:
+                for image in images_to_visualize:
+                    cv2.imshow(f"Image", image)
+                    cv2.waitKey(0)
+
 
     def _rotate_image(self, image, angle):
         # angle - in degrees
@@ -134,5 +167,6 @@ if __name__ == "__main__":
     # mnist.generate("./datasets/mnist_grad.csv", drift_start=0.50, drift_end=0.75, visualize=True)
 
     mnist = MNIST(_MNIST_PATH)
-    mnist.generate("./datasets/mnist_grad_mniejszy.csv", drift_start=0.25, drift_end=0.30, visualize=True, line_number_to_end_at=24_000)
+    # mnist.generate("./datasets/mnist_grad_mniejszy.csv", drift_start=0.25, drift_end=0.30, visualize=False, line_number_to_end_at=24_000)
+    mnist.generate("./datasets/mnist_grad_powolny.csv", drift_start=0.10, drift_end=0.95, visualize=False, line_number_to_end_at=59_999)
 

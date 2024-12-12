@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.BRANCH_STRUCTURE;
 import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.*;
 import static flinkClassifiersTesting.classifiers.helpers.MOAAdapter.mapExampleToInstance;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealVector;
@@ -62,7 +63,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         }
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        model.train_model(feature, label).toArray();
+        model.train_model(feature, label);
         return performances;
     }
 
@@ -92,6 +93,9 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         double[] result = model.predict(feature).toArray();
         int predictedClass = IntStream.range(0, result.length).reduce((i, j) -> result[i] > result[j] ? i : j).getAsInt();
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
+        // w performances chciałbym zwrócić tak: allBranches10_chosenBranch2_chosenBranchDepth4
+        BranchesInfo branchesInfo = model.getBranchesInfo();
+        performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.toPerformanceString()));
         return new Tuple2<>(predictedClass, performances);
     }
 
@@ -111,6 +115,6 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         System.out.println("bi: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        model.train_model(feature, label).toArray(); // todo zmienić, bo dwa razy sie bedzie wykonywalo
+        model.train_model(feature, label); // todo zmienić, bo dwa razy sie bedzie wykonywalo
     }
 }

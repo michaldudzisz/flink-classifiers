@@ -2,6 +2,7 @@ package flinkClassifiersTesting.processors.atnn;
 
 import flinkClassifiersTesting.classifiers.arf.AdaptiveRandomForestAdapter;
 import flinkClassifiersTesting.classifiers.atnn.Atnn;
+import flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields;
 import flinkClassifiersTesting.classifiers.base.BaseClassifierFields;
 import flinkClassifiersTesting.processors.base.BaseProcessFunctionClassifyAndTrain;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -27,6 +28,7 @@ public abstract class AtnnProcessFunction extends BaseProcessFunctionClassifyAnd
     @Override
     public List<String> csvColumnsHeader() {
         return List.of(
+                AtnnClassifierFields.BRANCH_STRUCTURE,
                 BaseClassifierFields.CLASSIFICATION_DURATION,
                 BaseClassifierFields.TRAINING_DURATION
         );

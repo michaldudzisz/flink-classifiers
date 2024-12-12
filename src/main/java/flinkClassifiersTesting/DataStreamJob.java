@@ -58,8 +58,9 @@ public class DataStreamJob {
 //        String dataset = "sea_grad";
 //        String dataset = "mnist_grad";
 //        String dataset = "elec-malutki";
-        String dataset = "mnist_grad_mniejszy";
+//        String dataset = "mnist_grad_mniejszy";
 //        String dataset = "mnist_grad_malutki";
+        String dataset = "mnist_grad_powolny";
 //        String dataset = "sea_grad";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
 //        long bootstrapSamplesLimit = 500L;

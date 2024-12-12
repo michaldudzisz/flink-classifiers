@@ -26,17 +26,6 @@ public class AtnnUtils {
         return createRealMatrix(matrix);
     }
 
-    // Standardizes a matrix
-//    public static RealMatrix standardization(RealMatrix matrix) { // todo czy to dobry kod w ogóle? to czata
-//        double mean = Arrays.stream(matrix.getData()).flatMapToDouble(Arrays::stream).average().orElse(0);
-//        double std = Math.sqrt(Arrays.stream(matrix.getData())
-//                .flatMapToDouble(Arrays::stream)
-//                .map(x -> (x - mean) * (x - mean))
-//                .average().orElse(0));
-//        double epsilon = 1e-7;
-//        return matrix.scalarAdd(-mean).scalarMultiply(1.0 / (std + epsilon));
-//    }
-
 
     public static double calculateStandardDeviation(List<Double> numbers) {
         // Sprawdzenie, czy lista nie jest pusta
@@ -220,7 +209,7 @@ public class AtnnUtils {
 class Node {
     int branchType = 0;
     boolean isShare = false;
-    double learnRate = 0.0006; // 0.02
+    double learnRate = 0.0006; // 0.0006 0.02
     int hNeuronNum;
     int cNeuronNum;
     boolean isRootNode = false;
@@ -242,7 +231,7 @@ class Node {
     int depth = 0;
     int trainTimes = 0;
     double reduction = 0.999;
-    double minLR = 0.0005; // 0.001
+    double minLR = 0.0005; // 0.0005 <- wartość z canda 0.001
     double lastPredictLoss = 0;
     RealMatrix squareGrad_hW = null;
     RealVector squareGrad_hb = null;
@@ -965,34 +954,17 @@ class Model {
         return modelOutput.get(activeBranch);
     }
 
+    public BranchesInfo getBranchesInfo() {
+        return new BranchesInfo(
+                branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
+                activeBranch,
+                get_active_node_list().size()
+        );
+    }
+
     private void printModelStructure() {
         System.out.println("\n*** Model structure ***\n");
-//        int featureNum;
-//        int hNeuronNum;
-//        int cNeuronNum;
-//        double beta = 0.99;
-//        double smooth = 0.2;
-//        int trainTimes = 0;
-//        int activeBranch = 0;
-//        int branchNum = 0;
-//        int maxBranchNum = 20;
-//        Node model = null;
-//        Map<Integer, List<Node>> nodeList = new HashMap<>();
-//        List<Node> activeNodeList = new ArrayList<>();
-//        Map<Integer, List<Double>> lossList = new HashMap<>();
-//        int lossLen = 1000;
-//        int splitLen = 50;
-//        Map<Integer, Map<String, Double>> lossStatisticsList = new HashMap<>();
-//        List<Integer> branchList = new ArrayList<>();
-//        boolean driftAlert = false;
-//        int alertNum = 0;
-//        int lastDriftTime = 0;
-//        int lamda = 5000;
-//        String dataSet = null;
-//        int confid = 3;
-//        int trainType = 0;
 
-//        Node root = model;
         for (Node node : activeNodeList) {
             System.out.println("\nNode:\nnode.branchType: " + node.branchType + ", node.depth: " + node.depth);
             System.out.println("hW: ");
@@ -1008,17 +980,7 @@ class Model {
         System.out.println("\n*** Model structure end ***\n");
     }
 
-//    private void printNodeStructure(Node node) {
-//        System.out.println("\n*** Node structure ***\n");
-//
-//        for (Node child : node.childList) {
-//            if (!driftAlert && child.branchType != activeBranch && child.branchType != 0)
-//                continue;
-//            printNodeStructure(child);
-//        }
-//    }
-
-    public RealVector train_model(RealVector feature, RealVector label) {
+    public void train_model(RealVector feature, RealVector label) {
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
         RealVector result = modelOutput.get(activeBranch);
@@ -1034,7 +996,7 @@ class Model {
         model_grow_and_prune();
         if (alertNum == splitLen)
             conceptDetection();
-        return result;
+        return;
     }
 
 
@@ -1102,129 +1064,3 @@ class Model {
 
 }
 
-
-//
-//public class OnlineLearning {
-//
-//    public static void main(String[] args) {
-//        List<String> dataSetList = List.of("RBF2_0");
-//        for (String dataSet : dataSetList) {
-//            System.out.println("-----------------------------");
-//            System.out.println("start train : " + dataSet);
-//            onlineLearning(dataSet);
-//        }
-//    }
-//
-//    public static void onlineLearning(String dataSet) {
-//        String dataSetName = dataSet;
-//        String fileName = "/datasets/" + dataSetName + ".csv";
-//
-//        Data data = DataLoader.load(fileName);
-//        double[][] x_train = data.getXTrain();
-//        double[][] y_train = data.getYTrain();
-//
-//        int statisticsLen = 100;
-//        int featureLen = x_train[0].length;
-//        int hNeuronNum = 256;
-//        int classNum = y_train[0].length;
-//
-//        // Inicjalizacja modelu
-//        Model model = new Model(featureLen, hNeuronNum, classNum);
-//        model.initNodeWeight();
-//
-//        int predictRightNumber = 0;
-//        int exampleNumber = 0;
-//        Map<Integer, Map<String, Double>> resultList = new HashMap<>();
-//        List<Boolean> blockResultList = new ArrayList<>();
-//
-//        for (int i = 0; i < x_train.length; i++) {
-//            exampleNumber++;
-//            double[][] feature = transpose(new double[][]{x_train[i]});
-//            double[][] label = transpose(new double[][]{y_train[i]});
-//            double[][] predictResult = model.trainModel(feature, label);
-//
-//            blockResultList.add(isMaxValueIndexEqual(predictResult, label));
-//
-//            if (blockResultList.size() == statisticsLen || exampleNumber == x_train.length) {
-//                double predictRightRate = blockResultList.stream().filter(b -> b).count() / (double) blockResultList.size();
-//                predictRightNumber += (int) blockResultList.stream().filter(b -> b).count();
-//
-//                System.out.println("*************************************************************************");
-//                System.out.println("size: " + exampleNumber);
-//                System.out.println("realtime: " + predictRightRate);
-//                System.out.println("cumulative: " + ((double) predictRightNumber / exampleNumber));
-//
-//                Map<String, Double> stats = new HashMap<>();
-//                stats.put("realtime", predictRightRate);
-//                stats.put("cumulative", (double) predictRightNumber / exampleNumber);
-//                resultList.put(exampleNumber, stats);
-//
-//                blockResultList.clear();
-//            }
-//        }
-//
-//        saveData(resultList, dataSet + ".json");
-//    }
-//
-//    // Transponowanie macierzy
-//    public static double[][] transpose(double[][] matrix) {
-//        int rows = matrix.length;
-//        int cols = matrix[0].length;
-//        double[][] transposed = new double[cols][rows];
-//        for (int i = 0; i < rows; i++) {
-//            for (int j = 0; j < cols; j++) {
-//                transposed[j][i] = matrix[i][j];
-//            }
-//        }
-//        return transposed;
-//    }
-//
-//    // Funkcja do porównania indeksów maksymalnych wartości
-//    public static boolean isMaxValueIndexEqual(double[][] predictResult, double[][] label) {
-//        int predictMaxIndex = getMaxIndex(predictResult);
-//        int labelMaxIndex = getMaxIndex(label);
-//        return predictMaxIndex == labelMaxIndex;
-//    }
-//
-//    // Znajdowanie indeksu maksymalnej wartości w jednowymiarowej macierzy
-//    public static int getMaxIndex(double[][] vector) {
-//        double max = vector[0][0];
-//        int index = 0;
-//        for (int i = 1; i < vector.length; i++) {
-//            if (vector[i][0] > max) {
-//                max = vector[i][0];
-//                index = i;
-//            }
-//        }
-//        return index;
-//    }
-//
-//    // Zapisywanie danych w formacie JSON
-//    public static void saveData(Map<Integer, Map<String, Double>> data, String fileName) {
-//        try (FileWriter writer = new FileWriter(fileName)) {
-//            writer.write(data.toString());
-//        } catch (IOException e) {
-//            System.err.println("Error while saving data: " + e.getMessage());
-//        }
-//    }
-//}
-//
-//// Przykladowa klasa Data - powinna być dostosowana do implementacji DataLoader
-//class Data {
-//    private final double[][] xTrain;
-//    private final double[][] yTrain;
-//
-//    public Data(double[][] xTrain, double[][] yTrain) {
-//        this.xTrain = xTrain;
-//        this.yTrain = yTrain;
-//    }
-//
-//    public double[][] getXTrain() {
-//        return xTrain;
-//    }
-//
-//    public double[][] getYTrain() {
-//        return yTrain;
-//    }
-//}
-//

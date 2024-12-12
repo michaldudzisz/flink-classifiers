@@ -2,7 +2,6 @@ package flinkClassifiersTesting.processors.arf;
 
 import flinkClassifiersTesting.classifiers.arf.AdaptiveRandomForestAdapter;
 import flinkClassifiersTesting.classifiers.base.BaseClassifierFields;
-import flinkClassifiersTesting.classifiers.cand.Cand;
 import flinkClassifiersTesting.processors.base.BaseProcessFunctionClassifyAndTrain;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -11,8 +10,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import java.util.List;
 import java.util.Map;
 
-import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.BEST_MLP_NAME;
-import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.MLP_LOSSES;
 
 public abstract class AdaptiveRandomForestProcessFunction extends BaseProcessFunctionClassifyAndTrain<AdaptiveRandomForestAdapter> {
 
