@@ -1,22 +1,15 @@
 package flinkClassifiersTesting.classifiers.atnn;
 
-import com.yahoo.labs.samoa.instances.*;
 import flinkClassifiersTesting.classifiers.base.BaseClassifierClassifyAndTrain;
 import flinkClassifiersTesting.inputs.Example;
-import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
-import moa.classifiers.deeplearning.CAND;
-import moa.classifiers.deeplearning.MLP;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.BRANCH_STRUCTURE;
-import static flinkClassifiersTesting.classifiers.cand.CandClassifierFields.*;
-import static flinkClassifiersTesting.classifiers.helpers.MOAAdapter.mapExampleToInstance;
+import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.DRIFT_STATUS;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealVector;
 
 /*
@@ -95,7 +88,8 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
         // w performances chciałbym zwrócić tak: allBranches10_chosenBranch2_chosenBranchDepth4
         BranchesInfo branchesInfo = model.getBranchesInfo();
-        performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.toPerformanceString()));
+        performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.getBranchesInfoString()));
+        performances.add(new Tuple2<>(DRIFT_STATUS, branchesInfo.getDriftStatusString()));
         return new Tuple2<>(predictedClass, performances);
     }
 

@@ -340,6 +340,12 @@ class Model {
     int confid = 3;
     int trainType = 0;
 
+    /*
+        Własne zmienne:
+    */
+    String driftStatus = "0";
+    // todo final String DRIFT_STATUS_JAKIŚ = "..."
+
     public Model(int featureNum, int hNeuronNum, int cNeuronNum) {
         this.featureNum = featureNum;
         this.hNeuronNum = hNeuronNum;
@@ -841,15 +847,8 @@ class Model {
 
             double mean = losslist.stream().reduce(0.0, Double::sum) / losslist.size();
             double variance = AtnnUtils.calculateStandardDeviation(losslist);
-            try {
-                List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size()).stream().sorted().collect(Collectors.toList()).subList(0, losslist.subList(losslist.size() - splitLen, losslist.size()).size() - 5); // todo czy to sie nie wywali przy -5?
-            } catch (Exception e) {
-                throw new RuntimeException("Zlapalemn wyjatek. losslist.size: " + losslist.size() +
-                        "\nlosslist.subList(losslist.size() - splitLen, losslist.size()).size: " + losslist.subList(losslist.size() - splitLen, losslist.size()).size() +
-                        "\nsplitLen: " + splitLen
-                );
-            }
-            List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size()).stream().sorted().collect(Collectors.toList()).subList(0, losslist.subList(losslist.size() - splitLen, losslist.size()).size() - 5); // todo czy to sie nie wywali przy -5?
+
+            List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size());
             double prev_mean = prev_loss.stream().reduce(0.0, Double::sum) / prev_loss.size();
             double prev_var = AtnnUtils.calculateStandardDeviation(prev_loss);
 
@@ -861,7 +860,7 @@ class Model {
                 dict.put("prev_var", prev_var);
                 lossStatisticsList.put(branch, dict);
             } else {
-                if ((mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")) {
+                if ((mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")) { // todo to jest min
                     lossStatisticsList.get(branch).put("mean", mean);
                     lossStatisticsList.get(branch).put("var", variance);
                 }
@@ -870,34 +869,106 @@ class Model {
             }
         }
 
+        // todo ta wersja ifa jest dostosowana do artykułu
         if (lossStatisticsList.containsKey(activeBranch)) {
-            double d = lossStatisticsList.get(activeBranch).get("mean") + confid * lossStatisticsList.get(activeBranch).get("var");
-            List<Double> lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - 5, lossList.get(activeBranch).size()); // todo czy to sie nie wywali
-            double min = Double.MAX_VALUE;
-            for (Double aDouble : lossWin) {
-                if (aDouble < min) {
-                    min = aDouble;
-                }
-            }
-            double driftFlag = min - d;
+            double driftWarnLevel = lossStatisticsList.get(activeBranch).get("mean") + 2 * lossStatisticsList.get(activeBranch).get("var"); // todo zmieniłem confid na 2, żeby było jak w wartykule
+            List<Double> lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - splitLen, lossList.get(activeBranch).size());
+
+            double activeBranchRecentMean = lossWin.stream().reduce(0.0, Double::sum) / lossWin.size();
+            double activeBranchRecentVar = AtnnUtils.calculateStandardDeviation(lossWin);
+
             if (!driftAlert) {
-                if (driftFlag > 0) {
+                driftStatus = "0"; // zero for no drift
+                if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) {
                     driftAlert = true;
-                } else {
-                    lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - splitLen, lossList.get(activeBranch).size());
-                    List<Double> withoutLast5 = lossWin.subList(0, lossWin.size() - 5);
-                    double mean = withoutLast5.stream().reduce(0.0, Double::sum) / withoutLast5.size();
-                    double variance = AtnnUtils.calculateStandardDeviation(withoutLast5);
-                    if (mean + variance > d)
-                        driftAlert = true;
+                    driftStatus = "warn";
+                }
+            } else {
+                if (activeBranchRecentMean + activeBranchRecentVar < driftWarnLevel) {
+                    driftAlert = false;
+                    alertNum = 0;
+                    driftStatus = "eliminated";
                 }
             }
 
             if (driftAlert) {
                 alertNum = alertNum + 1;
             }
+
         }
     }
+
+
+// Stara wersja funkcji update_loss_statistics
+
+//    private void update_loss_statistics() {
+//        for (Map.Entry<Integer, List<Double>> entry : lossList.entrySet()) {
+//            int branch = entry.getKey();
+//            List<Double> losslist = entry.getValue();
+//
+//            if (losslist.size() < lossLen) {
+//                continue;
+//            }
+//
+//            double mean = losslist.stream().reduce(0.0, Double::sum) / losslist.size();
+//            double variance = AtnnUtils.calculateStandardDeviation(losslist);
+//            try {
+//                List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size()).stream().sorted().collect(Collectors.toList()).subList(0, losslist.subList(losslist.size() - splitLen, losslist.size()).size() - 5); // todo czy to sie nie wywali przy -5?
+//            } catch (Exception e) {
+//                throw new RuntimeException("Zlapalemn wyjatek. losslist.size: " + losslist.size() +
+//                        "\nlosslist.subList(losslist.size() - splitLen, losslist.size()).size: " + losslist.subList(losslist.size() - splitLen, losslist.size()).size() +
+//                        "\nsplitLen: " + splitLen
+//                );
+//            }
+//            List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size()).stream().sorted().collect(Collectors.toList()).subList(0, losslist.subList(losslist.size() - splitLen, losslist.size()).size() - 5); // todo czy to sie nie wywali przy -5?
+//            double prev_mean = prev_loss.stream().reduce(0.0, Double::sum) / prev_loss.size();
+//            double prev_var = AtnnUtils.calculateStandardDeviation(prev_loss);
+//
+//            if (!lossStatisticsList.containsKey(branch)) {
+//                Map<String, Double> dict = new HashMap<>();
+//                dict.put("mean", mean);
+//                dict.put("var", variance);
+//                dict.put("prev_mean", prev_mean);
+//                dict.put("prev_var", prev_var);
+//                lossStatisticsList.put(branch, dict);
+//            } else {
+//                if ((mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")) {
+//                    lossStatisticsList.get(branch).put("mean", mean);
+//                    lossStatisticsList.get(branch).put("var", variance);
+//                }
+//                lossStatisticsList.get(branch).put("prev_mean", prev_mean);
+//                lossStatisticsList.get(branch).put("prev_var", prev_var);
+//            }
+//        }
+//
+//        if (lossStatisticsList.containsKey(activeBranch)) {
+//            double d = lossStatisticsList.get(activeBranch).get("mean") + confid * lossStatisticsList.get(activeBranch).get("var");
+//            List<Double> lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - 5, lossList.get(activeBranch).size()); // todo czy to sie nie wywali
+//            double min = Double.MAX_VALUE;
+//            for (Double aDouble : lossWin) {
+//                if (aDouble < min) {
+//                    min = aDouble;
+//                }
+//            }
+//            double driftFlag = min - d;
+//            if (!driftAlert) {
+//                if (driftFlag > 0) {
+//                    driftAlert = true;
+//                } else {
+//                    lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - splitLen, lossList.get(activeBranch).size());
+//                    List<Double> withoutLast5 = lossWin.subList(0, lossWin.size() - 5);
+//                    double mean = withoutLast5.stream().reduce(0.0, Double::sum) / withoutLast5.size();
+//                    double variance = AtnnUtils.calculateStandardDeviation(withoutLast5);
+//                    if (mean + variance > d)
+//                        driftAlert = true;
+//                }
+//            }
+//
+//            if (driftAlert) {
+//                alertNum = alertNum + 1;
+//            }
+//        }
+//    }
 
     private void reset_weight() {
         List<Node> nodes = get_active_node_list();
@@ -918,6 +989,7 @@ class Model {
         int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
         Map<String, Double> branchLoss = lossStatisticsList.get(minLossBranch);
         if (branchLoss.get("prev_var") + branchLoss.get("prev_mean") > branchLoss.get("mean") + confid * branchLoss.get("var")) {
+            driftStatus = "new_detected";
             update_fisherMatrix();
             add_branch();
             trainType = 0;
@@ -925,7 +997,10 @@ class Model {
             reset_weight();
         } else {
             if (minLossBranch != activeBranch) {
+                driftStatus = "recurring";
                 activeBranch = minLossBranch;
+            } else {
+                driftStatus = "current_evolving";
             }
         }
 
@@ -936,7 +1011,6 @@ class Model {
             node.alertSquareGrad_hb = node.alertSquareGrad_hb.mapMultiply(0);
         }
     }
-
 
     private void update_fisherMatrix() {
         for (Node node : nodeList.get(0)) {
@@ -950,7 +1024,6 @@ class Model {
     public RealVector predict(RealVector feature) {
         forward_propagation(model, feature);
         Map<Integer, RealVector> modelOutput = get_model_output();
-        System.out.println("activeNodeList.size(): " + activeNodeList.size());
         return modelOutput.get(activeBranch);
     }
 
@@ -958,7 +1031,8 @@ class Model {
         return new BranchesInfo(
                 branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
                 activeBranch,
-                get_active_node_list().size()
+                get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
+                driftStatus
         );
     }
 

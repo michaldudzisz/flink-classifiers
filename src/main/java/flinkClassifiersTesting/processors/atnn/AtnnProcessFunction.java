@@ -29,6 +29,7 @@ public abstract class AtnnProcessFunction extends BaseProcessFunctionClassifyAnd
     public List<String> csvColumnsHeader() {
         return List.of(
                 AtnnClassifierFields.BRANCH_STRUCTURE,
+                AtnnClassifierFields.DRIFT_STATUS,
                 BaseClassifierFields.CLASSIFICATION_DURATION,
                 BaseClassifierFields.TRAINING_DURATION
         );
