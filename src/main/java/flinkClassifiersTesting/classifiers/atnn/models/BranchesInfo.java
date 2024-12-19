@@ -1,4 +1,4 @@
-package flinkClassifiersTesting.classifiers.atnn;
+package flinkClassifiersTesting.classifiers.atnn.models;
 
 public class BranchesInfo {
     final int allBranches;

@@ -1,5 +1,7 @@
 package flinkClassifiersTesting.classifiers.atnn;
 
+import flinkClassifiersTesting.classifiers.atnn.models.BranchesInfo;
+import flinkClassifiersTesting.classifiers.atnn.models.BaseAtnnModel;
 import flinkClassifiersTesting.classifiers.base.BaseClassifierClassifyAndTrain;
 import flinkClassifiersTesting.inputs.Example;
 import org.apache.commons.math3.linear.RealVector;
@@ -17,20 +19,6 @@ This class is a flinkClassifiersTesting wrapper for moa.classifiers.deeplearning
 */
 public class Atnn extends BaseClassifierClassifyAndTrain {
 
-    int statisticsLen = 100;
-
-    // mnist
-//    int featureLen = 784;
-//    int classNum = 10;
-
-    // elec
-//    int featureLen = 6;
-//    int classNum = 2;
-
-    // sea abr
-//    int featureLen = 3;
-//    int classNum = 2;
-
     int featureLen;
     int classNum;
 
@@ -38,11 +26,10 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     int exampleNumber = 0;
 
-    Model model;
+    BaseAtnnModel model;
 
     public Atnn(Map<String, Integer> classEncoder) {
         classNum = classEncoder.keySet().size(); // classes may be defined not as in class encoder, can fix it later
-//        lastResults[0] = 0.001;
     }
 
 
@@ -51,7 +38,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         // przyjmuje i zwraca performance
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new Model(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         RealVector feature = createRealVector(example.getAttributes());
@@ -76,7 +63,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new Model(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         exampleNumber += 1;
@@ -102,7 +89,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     public void bootstrapTrainImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new Model(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         exampleNumber += 1;
