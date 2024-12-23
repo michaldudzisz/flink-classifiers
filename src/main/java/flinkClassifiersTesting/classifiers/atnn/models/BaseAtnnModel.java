@@ -114,6 +114,8 @@ public class BaseAtnnModel {
         for (Node node : nodeList.get(0).subList(1, nodeList.get(0).size())) {
             node.alertFisher_hW = node.alertSquareGrad_hW.scalarMultiply((double) 1 / alertNum);
             node.alertFisher_hb = node.alertSquareGrad_hb.mapMultiply((double) 1 / alertNum);
+//            if (node.alertFisher_hW.getRowDimension() != 256 || node.alertFisher_hW.getColumnDimension() != 256)
+//                throw new IllegalArgumentException("rows: " + node.alertFisher_hW.getRowDimension() + ", cols: " + node.alertFisher_hW.getColumnDimension());
             double sim = matrixCosineSimilarity(node.alertFisher_hW, node.Fisher_hW);
             if (node.depth <= max_index) {
                 if (sim < init_sim) {
@@ -268,16 +270,16 @@ public class BaseAtnnModel {
         }
 
         // todo dodane na czas sprawdzenia
-        if (trainTimes == 9_000 || trainTimes == 12_000 || trainTimes == 15_000 && (node.depth == 2 || node.depth == 3)) {
-            if (node.depth == 2) {
-                System.out.println("zwiekszam lr dla node.depth " + node.depth);
-            }
-            if (node.depth == 3) {
-                System.out.println("zwiekszam lr dla node.depth " + node.depth);
-            }
-
-            node.learnRate = 0.02;
-        }
+//        if (trainTimes == 9_000 || trainTimes == 12_000 || trainTimes == 15_000 && (node.depth == 2 || node.depth == 3)) {
+//            if (node.depth == 2) {
+//                System.out.println("zwiekszam lr dla node.depth " + node.depth);
+//            }
+//            if (node.depth == 3) {
+//                System.out.println("zwiekszam lr dla node.depth " + node.depth);
+//            }
+//
+//            node.learnRate = 0.02;
+//        }
 
         node.dev_hW = null;
         node.dev_cW = null;
@@ -377,7 +379,7 @@ public class BaseAtnnModel {
         double activeBranchRecentVar = AtnnUtils.calculateStandardDeviation(lossWin);
 
         if (!driftAlert) {
-            if (activeBranchRecentMean + activeBranchRecentVar > 10_000 * driftWarnLevel) { // todo zmyśliłem 10_000, żeby tego nigdy nie było
+            if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) { // todo zmyśliłem 10_000, żeby tego nigdy nie było
                 driftAlert = true;
                 driftStatus = DRIFT_STATUS_WARN;
             }

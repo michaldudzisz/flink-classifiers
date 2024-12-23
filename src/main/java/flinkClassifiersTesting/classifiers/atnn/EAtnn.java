@@ -18,7 +18,7 @@ import static org.apache.commons.math3.linear.MatrixUtils.createRealVector;
 /*
 This class is a flinkClassifiersTesting wrapper for moa.classifiers.deeplearning.CAND
 */
-public class Atnn extends BaseClassifierClassifyAndTrain {
+public class EAtnn extends BaseClassifierClassifyAndTrain {
 
     int featureLen;
     int classNum;
@@ -29,7 +29,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
 
     BaseAtnnModel model;
 
-    public Atnn(Map<String, Integer> classEncoder) {
+    public EAtnn(Map<String, Integer> classEncoder) {
         classNum = classEncoder.keySet().size(); // classes may be defined not as in class encoder, can fix it later
     }
 
@@ -39,7 +39,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         // przyjmuje i zwraca performance
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new EnhancedAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         RealVector feature = createRealVector(example.getAttributes());

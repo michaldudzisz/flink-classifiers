@@ -23,6 +23,7 @@ import flinkClassifiersTesting.processors.factory.arf.AdaptiveRandomForestClassi
 import flinkClassifiersTesting.processors.factory.arf.AdaptiveRandomForestProcessFactory;
 import flinkClassifiersTesting.processors.factory.atnn.AtnnClassifierParams;
 import flinkClassifiersTesting.processors.factory.atnn.AtnnProcessFactory;
+import flinkClassifiersTesting.processors.factory.atnn.EAtnnProcessFactory;
 import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
 import flinkClassifiersTesting.processors.factory.cand.CandProcessFactory;
 import flinkClassifiersTesting.processors.factory.vfdt.VfdtClassifierParams;
@@ -53,14 +54,14 @@ public class DataStreamJob {
     public static void main(String[] args) throws Exception {
         String basePath = getBaseDirectory();
 //        String dataset = "elec-maly";
-//        String dataset = "elec";
+        String dataset = "elec";
 //        String dataset = "sea_abr";
 //        String dataset = "sea_grad";
 //        String dataset = "mnist_grad";
 //        String dataset = "elec-malutki";
 //        String dataset = "mnist_grad_mniejszy";
 //        String dataset = "mnist_grad_malutki";
-        String dataset = "mnist_grad_powolny_4x_szybszy";
+//        String dataset = "mnist_grad_powolny_4x_szybszy";
 //        String dataset = "mnist_grad_atnnowy_prosty";
 //        String dataset = "sea_grad";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
@@ -75,10 +76,12 @@ public class DataStreamJob {
 //        );
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AdaptiveRandomForestProcessFactory.arf(arfParams));
 //
-//        List<AtnnClassifierParams> atnnParams = List.of(
-//                new AtnnClassifierParams()
-//        );
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+        List<AtnnClassifierParams> atnnParams = List.of(
+                new AtnnClassifierParams()
+        );
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
+        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+
 
 //        List<CandClassifierParams> candParams = List.of(
 //                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, false)

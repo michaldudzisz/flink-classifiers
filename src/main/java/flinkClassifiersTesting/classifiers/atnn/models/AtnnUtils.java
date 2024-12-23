@@ -158,6 +158,8 @@ public class AtnnUtils {
                 elementWiseMaximum[i][j] = Math.max(node_dev_hW_data1[i][j], node_dev_hW_data2[i][j]);
             }
         }
+//        if (m1.getRowDimension() != 256 || m1.getColumnDimension() != 256)
+//            throw new IllegalArgumentException("rows: " + m1.getRowDimension() + ", cols: " + m1.getColumnDimension());
         return new Array2DRowRealMatrix(elementWiseMaximum);
     }
 
