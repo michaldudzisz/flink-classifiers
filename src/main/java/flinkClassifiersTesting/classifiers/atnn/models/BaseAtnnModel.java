@@ -27,7 +27,7 @@ public class BaseAtnnModel {
     boolean driftAlert = false;
     int alertNum = 0;
     int lastDriftTime = 0;
-    int lamda = 5000;
+    int lamda = 5000; // 5000;
     String dataSet = null;
     int confid = 3;
 
@@ -136,6 +136,10 @@ public class BaseAtnnModel {
             parent = parent.parent;
         }
 
+
+//        // todo ustawmy aktualny growing point
+//        growingPointForCurrent = branchNode.depth;
+
         return branchNode;
     }
 
@@ -175,6 +179,11 @@ public class BaseAtnnModel {
             node.classifierOutput = softmax(node.classifierInput);
         } else {
             node.hideInput = node.hW.operate(feature).add(node.hb);
+//            checkIfMatrixContainsNaN(node.hW, "node.hW");
+//            checkIfVectorContainsNaN(node.hb, "node.hb");
+//            checkIfMatrixContainsInfinity(node.hW, "node.hW"); // todo to miewa infinity
+//            checkIfVectorContainsInfinity(node.hb, "node.hb");
+//            checkIfVectorContainsNaN(feature, "feature");
             node.hideOutput = node.relu(node.hideInput);
             node.classifierInput = node.cW.operate(node.hideOutput).add(node.cb);
             node.classifierOutput = softmax(node.classifierInput);
@@ -190,6 +199,8 @@ public class BaseAtnnModel {
     protected boolean should_back_propagate_node(Node node) {
         return node.branchType == 0 || node.branchType == activeBranch;
     }
+
+    double BIG_NUMBER = 1_000_000_000_000.0;
 
     protected void back_propagation(Node node, RealVector trueLabel) {
         for (Node child : node.childList) {
@@ -232,8 +243,28 @@ public class BaseAtnnModel {
         node.dev_hW = node.dev_hInput.outerProduct(node.parent.hideOutput);
 
         if (node.branchType == 0 && node.trainTimes > 2000) {
-            node.squareGrad_hW = node.squareGrad_hW.add(squareEachElement(node.dev_hW.add(ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW)).scalarMultiply(lamda))));
-            node.squareGrad_hb = node.squareGrad_hb.add(squareEachElement(node.dev_hInput.add(node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb)).mapMultiply(lamda))));
+//            node.squareGrad_hW = node.squareGrad_hW.add(squareEachElement(node.dev_hW.add(ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW)).scalarMultiply(lamda))));
+            RealMatrix m1 = ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW)); // todo dec 29 naprawiam błędy numeryczne
+            for (int i = 0; i < m1.getRowDimension(); i++) {
+                for (int j = 0; j < m1.getColumnDimension(); j++) {
+                    Double newValue = m1.getEntry(i, j) * lamda;
+                    if (newValue > BIG_NUMBER) {
+                        newValue = BIG_NUMBER;
+                    }
+                    m1.setEntry(i, j, newValue);
+                }
+            }
+            node.squareGrad_hW = node.squareGrad_hW.add(squareEachElement(node.dev_hW.add(m1)));
+//            node.squareGrad_hb = node.squareGrad_hb.add(squareEachElement(node.dev_hInput.add(node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb)).mapMultiply(lamda))));
+            RealVector m2 = node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb)); // todo dec 29 naprawiam błędy numeryczne
+            for (int i = 0; i < m2.getDimension(); i++) {
+                Double newValue = m2.getEntry(i) * lamda;
+                if (newValue > BIG_NUMBER) {
+                    newValue = BIG_NUMBER;
+                }
+                m2.setEntry(i, newValue);
+            }
+            node.squareGrad_hb = node.squareGrad_hb.add(squareEachElement(node.dev_hInput.add(m2)));
         }
     }
 
@@ -248,14 +279,41 @@ public class BaseAtnnModel {
         node.trainTimes = node.trainTimes + 1;
         double lr = node.learnRate;
 
-        if (node.isRootNode) {
+        if (node.isRootNode) { // todo czy w tym kodzie nie powinno być cross entropy jeszcze?
             node.cW = node.cW.subtract(node.dev_cW.scalarMultiply(lr));
             node.cb = node.cb.subtract(node.dev_cInput.mapMultiply(lr));
         } else {
             if (node.isShare) {
-                node.hW = node.hW.subtract(node.dev_hW.add((ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW))).scalarMultiply(lamda)).scalarMultiply(lr));
+//                node.hW = node.hW.subtract(node.dev_hW.add((ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW))).scalarMultiply(lamda)).scalarMultiply(lr));
+
+                RealMatrix m1 = ebeMultiply(node.Fisher_hW, node.hW.subtract(node.lastConcept_hW)); // todo dec 29 naprawiam błędy numeryczne
+                for (int i = 0; i < m1.getRowDimension(); i++) {
+                    for (int j = 0; j < m1.getColumnDimension(); j++) {
+                        Double newValue = m1.getEntry(i, j) * lamda;
+                        if (newValue > BIG_NUMBER) {
+                            newValue = BIG_NUMBER;
+                        }
+                        m1.setEntry(i, j, newValue);
+                    }
+                }
+                node.hW = node.hW.subtract(node.dev_hW.add(m1).scalarMultiply(lr));
+
+
+
                 node.cW = node.cW.subtract(node.dev_cW.scalarMultiply(lr));
-                node.hb = node.hb.subtract(node.dev_hInput.add(node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb))).mapMultiply(lr));
+//                node.hb = node.hb.subtract(node.dev_hInput.add(node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb)).mapMultiply(lamda)).mapMultiply(lr));
+
+                RealVector m2 = node.Fisher_hb.ebeMultiply(node.hb.subtract(node.lastConcept_hb)); // todo dec 29 naprawiam błędy numeryczne
+                for (int i = 0; i < m2.getDimension(); i++) {
+                    Double newValue = m2.getEntry(i) * lamda;
+                    if (newValue > BIG_NUMBER) {
+                        newValue = BIG_NUMBER;
+                    }
+                    m2.setEntry(i, newValue);
+                }
+                node.hb = node.hb.subtract(node.dev_hInput.add(m2).mapMultiply(lr));
+
+
                 node.cb = node.cb.subtract(node.dev_cInput.mapMultiply(lr));
             } else {
                 node.hW = node.hW.subtract(node.dev_hW.scalarMultiply(lr));
@@ -408,28 +466,32 @@ public class BaseAtnnModel {
             return;
         }
 
-        int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
-        Map<String, Double> branchLoss = lossStatisticsList.get(minLossBranch);
-        if (branchLoss.get("prev_var") + branchLoss.get("prev_mean") > branchLoss.get("mean") + confid * branchLoss.get("var")) {
-            driftStatus = DRIFT_STATUS_NEW_DETECTED;
-            update_fisherMatrix();
-            add_empty_branch();
-            lastDriftTime = trainTimes;
-            reset_weight();
-        } else {
-            if (minLossBranch != activeBranch) {
-                driftStatus = DRIFT_STATUS_RECURRING;
-                activeBranch = minLossBranch;
+        // todo dec 29 - przepisywanie na zgodnie z artykułem
+        Map<String, Double> activeBranchLoss = lossStatisticsList.get(activeBranch);
+        double conceptDriftThreshold = activeBranchLoss.get("mean") + confid * activeBranchLoss.get("var");
+        if (activeBranchLoss.get("prev_var") + activeBranchLoss.get("prev_mean") > conceptDriftThreshold) {
+            int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
+            Map<String, Double> minLossMap = lossStatisticsList.get(minLossBranch);
+            if (minLossMap.get("prev_var") + minLossMap.get("prev_mean") > conceptDriftThreshold) {
+                driftStatus = DRIFT_STATUS_NEW_DETECTED;
+                update_fisherMatrix();
+                add_empty_branch();
+                lastDriftTime = trainTimes;
+                reset_weight();
             } else {
-                driftStatus = DRIFT_STATUS_CURRENT_EVOLVING;
+                if (minLossBranch != activeBranch) {
+                    driftStatus = DRIFT_STATUS_RECURRING;
+                    activeBranch = minLossBranch;
+                } else {
+                    driftStatus = DRIFT_STATUS_CURRENT_EVOLVING;
+                }
             }
-        }
-
-        driftAlert = false;
-        alertNum = 0;
-        for (Node node : nodeList.get(0)) {
-            node.alertSquareGrad_hW = node.alertSquareGrad_hW.scalarMultiply(0);
-            node.alertSquareGrad_hb = node.alertSquareGrad_hb.mapMultiply(0);
+            driftAlert = false;
+            alertNum = 0;
+            for (Node node : nodeList.get(0)) {
+                node.alertSquareGrad_hW = node.alertSquareGrad_hW.scalarMultiply(0);
+                node.alertSquareGrad_hb = node.alertSquareGrad_hb.mapMultiply(0);
+            }
         }
     }
 
@@ -452,6 +514,7 @@ public class BaseAtnnModel {
         return new BranchesInfo(
                 branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
                 activeBranch,
+                get_active_node_list().get(0).depth,
                 get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
                 driftStatus
         );
@@ -487,7 +550,7 @@ public class BaseAtnnModel {
         update_weight_by_loss(activeNodeList, label);
         trainTimes = trainTimes + 1;
         model_grow_and_prune();
-        if (alertNum == splitLen)
+        if (alertNum >= splitLen)
             conceptDetection();
         return;
     }

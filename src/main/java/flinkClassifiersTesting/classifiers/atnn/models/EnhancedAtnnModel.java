@@ -71,29 +71,35 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
         if (!lossStatisticsList.containsKey(activeBranch)) {
             return;
         }
-        int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
-        Map<String, Double> branchLoss = lossStatisticsList.get(minLossBranch);
-        if (branchLoss.get("prev_var") + branchLoss.get("prev_mean") > branchLoss.get("mean") + confid * branchLoss.get("var")) {
-            driftStatus = DRIFT_STATUS_NEW_DETECTED;
-            update_fisherMatrix();
-            choose_among_drift_branches();
-            lastDriftTime = trainTimes;
-            reset_weight();
-        } else {
-            if (minLossBranch != activeBranch) {
-                driftStatus = DRIFT_STATUS_RECURRING;
-                activeBranch = minLossBranch;
-            } else {
-                driftStatus = DRIFT_STATUS_CURRENT_EVOLVING;
-            }
-        }
 
-        clean_drift_alert_branches();
-        driftAlert = false;
-        alertNum = 0;
-        for (Node node : nodeList.get(0)) {
-            node.alertSquareGrad_hW = node.alertSquareGrad_hW.scalarMultiply(0);
-            node.alertSquareGrad_hb = node.alertSquareGrad_hb.mapMultiply(0);
+        // todo dec 29 - przepisywanie na zgodnie z artykułem
+        Map<String, Double> activeBranchLoss = lossStatisticsList.get(activeBranch);
+        double conceptDriftThreshold = activeBranchLoss.get("mean") + confid * activeBranchLoss.get("var");
+        if (activeBranchLoss.get("prev_var") + activeBranchLoss.get("prev_mean") > conceptDriftThreshold) {
+            int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
+            Map<String, Double> minLossMap = lossStatisticsList.get(minLossBranch);
+            if (minLossMap.get("prev_var") + minLossMap.get("prev_mean") > conceptDriftThreshold) {
+                driftStatus = DRIFT_STATUS_NEW_DETECTED;
+                update_fisherMatrix();
+                choose_among_drift_branches();
+                lastDriftTime = trainTimes;
+                reset_weight();
+            } else {
+                if (minLossBranch != activeBranch) {
+                    driftStatus = DRIFT_STATUS_RECURRING;
+                    activeBranch = minLossBranch;
+                } else {
+                    driftStatus = DRIFT_STATUS_CURRENT_EVOLVING;
+                }
+            }
+
+            clean_drift_alert_branches();
+            driftAlert = false;
+            alertNum = 0;
+            for (Node node : nodeList.get(0)) {
+                node.alertSquareGrad_hW = node.alertSquareGrad_hW.scalarMultiply(0);
+                node.alertSquareGrad_hb = node.alertSquareGrad_hb.mapMultiply(0);
+            }
         }
     }
 
@@ -157,14 +163,14 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 
     @Override
     protected void driftAlertDetection() {
-        double driftWarnLevel = lossStatisticsList.get(activeBranch).get("mean") + 2 * lossStatisticsList.get(activeBranch).get("var");
+        double driftWarnLevel = lossStatisticsList.get(activeBranch).get("mean") + 2 * lossStatisticsList.get(activeBranch).get("var"); // todo zmieniłem confid na 2, żeby było jak w wartykule
         List<Double> lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - splitLen, lossList.get(activeBranch).size());
 
         double activeBranchRecentMean = lossWin.stream().reduce(0.0, Double::sum) / lossWin.size();
         double activeBranchRecentVar = AtnnUtils.calculateStandardDeviation(lossWin);
 
         if (!driftAlert) {
-            if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) {
+            if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) { // todo zmyśliłem 10_000, żeby tego nigdy nie było
                 driftAlert = true;
                 driftStatus = DRIFT_STATUS_WARN;
                 add_empty_branch();

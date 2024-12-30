@@ -4,7 +4,9 @@ mvn package
 
 # These variables can be set also in IntelliJ run configuration
 export FLINK_BIN_PATH="/home/michal/Documents/mgr/flink-1.19.1/bin"
+export FLINK_BIN_PATH="/Users/michal.dudzisz/bin/flink-1.19.1/bin"
 export RESULTS_DIRECTORY="/home/michal/Documents/mgr/flink-classifiers/results"
+export RESULTS_DIRECTORY="/Users/michal.dudzisz/Documents/mgr/flink-classifiers/results"
 export FLINK_ADDRESS="localhost"
 export FLINK_PORT="8081"
 

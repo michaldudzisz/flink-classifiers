@@ -68,10 +68,16 @@ public class AtnnUtils {
 
         double[] farr1 = new double[arr1.getRowDimension() * arr1.getColumnDimension()];
         double[] farr2 = new double[arr2.getRowDimension() * arr2.getColumnDimension()];
+        System.out.println("farr1 len: " + farr1.length);
+        System.out.println("arr1 rows: " + arr1.getRowDimension());
+        System.out.println("arr1 cols: " + arr1.getColumnDimension());
         for (int i = 0; i < arr1.getRowDimension(); i++) {
             for (int j = 0; j < arr1.getColumnDimension(); j++) {
-                farr1[i * arr1.getRowDimension() + j] = arr1.getEntry(i, j);
-                farr2[i * arr2.getRowDimension() + j] = arr2.getEntry(i, j);
+                if (i * arr1.getRowDimension() + j == 192) {
+                    System.out.println("i: " + i + ", j: " + j);
+                }
+                farr1[i * arr1.getColumnDimension() + j] = arr1.getEntry(i, j);
+                farr2[i * arr2.getColumnDimension() + j] = arr2.getEntry(i, j);
             }
         }
 
@@ -183,7 +189,17 @@ public class AtnnUtils {
         }
     }
 
-    private static void checkIfVectorContainsNaN(RealVector vector) {
+    public static void checkIfMatrixContainsInfinity(RealMatrix matrix, String msg) {
+        for (int i = 0; i < matrix.getRowDimension(); i++) {
+            for (int j = 0; j < matrix.getColumnDimension(); j++) {
+                if (Double.isInfinite(matrix.getEntry(i, j))) {
+                    throw new RuntimeException("matrix: " + matrix + "\n" + msg);
+                }
+            }
+        }
+    }
+
+    public static void checkIfVectorContainsNaN(RealVector vector) {
         for (int i = 0; i < vector.getDimension(); i++) {
             if (Double.isNaN(vector.getEntry(i))) {
                 throw new RuntimeException("vector: " + vector);
@@ -191,9 +207,17 @@ public class AtnnUtils {
         }
     }
 
-    private static void checkIfVectorContainsNaN(RealVector vector, String msg) {
+    public static void checkIfVectorContainsNaN(RealVector vector, String msg) {
         for (int i = 0; i < vector.getDimension(); i++) {
             if (Double.isNaN(vector.getEntry(i))) {
+                throw new RuntimeException("vector: " + vector + ",\n" + msg);
+            }
+        }
+    }
+
+    public static void checkIfVectorContainsInfinity(RealVector vector, String msg) {
+        for (int i = 0; i < vector.getDimension(); i++) {
+            if (Double.isInfinite(vector.getEntry(i))) {
                 throw new RuntimeException("vector: " + vector + ",\n" + msg);
             }
         }
