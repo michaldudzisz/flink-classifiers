@@ -37,6 +37,7 @@ public class Node {
     double weight = 0;
     int depth = 0;
     int trainTimes = 0;
+    boolean hasBeenForwarded = false;
     double reduction = 0.999;
     double lastPredictLoss = 0;
     RealMatrix squareGrad_hW = null;
@@ -139,13 +140,20 @@ public class Node {
         copied.hideOutput = this.hideOutput.copy();
         copied.classifierInput = this.classifierInput.copy();
         copied.classifierOutput = this.classifierOutput.copy();
-        copied.dev_hW = this.dev_hW.copy();
-        copied.dev_cW = this.dev_cW.copy();
-        copied.dev_cInput = this.dev_cInput.copy();
-        copied.dev_hInput = this.dev_hInput.copy();
+
+//        copied.dev_hW = copied.dev_hW.copy();
+//        copied.dev_cW = copied.dev_cW.copy();
+//        copied.dev_cInput = copied.dev_cInput.copy();
+//        copied.dev_hInput = copied.dev_hInput.copy();
+        copied.dev_hW = null;
+        copied.dev_cW = null;
+        copied.dev_cInput = null;
+        copied.dev_hInput = null;
+
         copied.weight = this.weight; // todo jak są zmieniane w czasie te wagi?
         copied.depth = this.depth;
         copied.trainTimes = 0; // todo czy na pewno 0? Gdzie to jest używane?
+        boolean hasBeenForwarded = false;
         copied.reduction = this.reduction;
         copied.lastPredictLoss = this.lastPredictLoss;
         copied.squareGrad_hW = this.squareGrad_hW.copy();

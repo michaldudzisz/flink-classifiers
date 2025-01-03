@@ -126,7 +126,7 @@ num_attributes = 2
 std_dev = 0.2
 warmup_samples = 2_000
 drift_samples = 18_000
-drift_speed = 0.5
+drift_speed = 0.05
 generate_incremental_drift_dataset(
     num_attributes=num_attributes,
     std_dev=std_dev,

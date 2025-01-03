@@ -87,6 +87,7 @@ def readData(paths: list[str], headers: list[str]):
                         if (not row[key].isdigit()):
                             print(row[key])
                             print(row[key].isdigit())
+                            print("koncze sie, bo mam czas, ktory nie jest liczba")
                             quit()
                     if row[key].isdigit():
                         result[key].append(int(row[key]))
@@ -253,8 +254,6 @@ def getBestClassifier(classifierPath: str):
                 bestHeaders = headers
                 bestJobId = resultJson["jobId"]
 
-            # todo ususn mnie potem
-            print(results["trainingDuration"])
 
             trainingDuration = round(np.sum(results["trainingDuration"]) / 1e9, 2)
             classificationDuration = round(np.sum(results["classificationDuration"]) / 1e9, 2)
@@ -295,7 +294,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     if plot_printer_config.is_set() and printSmall is False:
         plt.figure(dpi=1200)
     else:
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
+        fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(10, 8))
 
     performanceTypeTranslated = translatePerformanceType(performanceType)
 
@@ -319,8 +318,20 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
             # rysuj linie wykrytych dryfów
             for idx, driftStatus in enumerate(classifier.results["driftStatus"]):
                 if driftStatus == "new_detected":
-                    print(f"dryf dla x = {idx}")
-                    axes[0].axvline(x=idx, color='#d99923', linestyle=':', linewidth=0.75, label='xd')
+                    print(f"dryf new_detected dla x = {idx}")
+                    axes[0].axvline(x=idx, color='#eb9834', linestyle=':', linewidth=2, label='new_detected')
+                if driftStatus == "new_detected_cloned":
+                    print(f"dryf new_detected_copied dla x = {idx}")
+                    axes[0].axvline(x=idx, color='#eb34e1', linestyle=':', linewidth=2, label='new_detected_cloned')
+                if driftStatus == "new_detected_empty":
+                    print(f"dryf new_detected_empty dla x = {idx}")
+                    axes[0].axvline(x=idx, color='#45bfa5', linestyle=':', linewidth=2, label='new_detected_empty')
+                if driftStatus == "current_evolving":
+                    print(f"dryf current_evolving dla x = {idx}")
+                    axes[0].axvline(x=idx, color='#52ad36', linestyle=':', linewidth=2, label='current_evolving')
+                if driftStatus == "recurring":
+                    print(f"dryf recurring dla x = {idx}")
+                    axes[0].axvline(x=idx, color='#034efc', linestyle=':', linewidth=2, label='recurring')
 
             # rysuj liczbe warstw na drugim wykresie
             trunk_line = []
@@ -328,24 +339,55 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
             for idx, input_string in enumerate(classifier.results["branchStructure"]):
                 # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
                 name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
-                pattern = r"(\w+)(\d+)"
+                pattern = r"([a-zA-Z]*)(\d+)"
                 matches = []
                 for pair in name_value_pairs:
-                    matches.extend(re.findall(pattern, pair))
-                # print(f"matches: {matches}")
+                    match = re.match(pattern, pair) # np 'allBranches4'
+                    if match:
+                        name = match.group(1)
+                        value = int(match.group(2))
+                        matches.append((name, value))
                 result = {name: int(value) for name, value in matches}
-                # print(f"result: {result}")
+                # print(result)
                 if result["activeBranch"] == 0:
                     trunk_line.append(result["activeBranchDepth"])
                 else:
                     trunk_line.append(result["growingPoint"])
                 branch_line.append(result["growingPoint"] + result["activeBranchDepth"])
 
-            print(sampleNumbers)
-            print(len(sampleNumbers))
             axes[1].plot(sampleNumbers, trunk_line[-len(sampleNumbers):], label=labelFun(classifier) + " trunk")
             axes[1].plot(sampleNumbers, branch_line[-len(sampleNumbers):], label=labelFun(classifier) + " branch")
+            axes[1].legend()
             axes[1].set_ylim(bottom=0)
+
+            # rysuj straty
+            active_line = []
+            empty_line = []
+            copied_line = []
+            for idx, input_string in enumerate(classifier.results["branchStructure"]):
+                # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
+                name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
+                pattern = r"([a-zA-Z]*)(\d+(?:\.\d+)?)"
+                matches = []
+                for pair in name_value_pairs:
+                    match = re.match(pattern, pair) # np 'allBranches4'
+                    if match:
+                        name = match.group(1)
+                        value = float(match.group(2))
+                        matches.append((name, value))
+                result = {name: float(value) for name, value in matches}
+                # print(result)
+                active_line.append(result["active"])
+                empty_line.append(result["empty"])
+                copied_line.append(result["cloned"])
+                # print(result)
+
+            axes[2].plot(sampleNumbers, active_line[-len(sampleNumbers):], label=labelFun(classifier) + " active loss")
+            axes[2].plot(sampleNumbers, empty_line[-len(sampleNumbers):], label=labelFun(classifier) + " empty loss")
+            axes[2].plot(sampleNumbers, copied_line[-len(sampleNumbers):], label=labelFun(classifier) + " copied loss")
+            axes[2].set_ylim(bottom=0)
+            axes[2].legend()
+
 
 
         #     if showDetections is True:
@@ -361,11 +403,12 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
         #         x = (timestamps - timestamps[0]) / 1e9
         #     plt.plot(x, y, label=labelFun(classifier))
 
+    axes[0].legend()
     if len(classifierResults) > 1:
         axes[0].legend()
 
     if overridenYLabel:
-        exes[0].set_ylabel(overridenYLabel)
+        axes[0].set_ylabel(overridenYLabel)
     else:
         axes[0].set_ylabel(ylabel(performanceTypeTranslated, unit))
 

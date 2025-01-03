@@ -163,15 +163,21 @@ public class BaseAtnnModel {
 
 
     protected void del_branch(Node node, int branchType) {
-        for (Node child : node.childList) {
-            del_branch(child, branchType);
-        }
-        if (node.branchType == branchType) {
-            node.parent.childList.remove(node);
-        }
+        // jan 2 zmieniłem implementację
+        Node firstNodeInBranch = nodeList.get(branchType).get(0);
+        firstNodeInBranch.parent.childList.remove(firstNodeInBranch);
+//
+//        for (Node child : node.childList) {
+//            del_branch(child, branchType);
+//        }
+//        if (node.branchType == branchType) {
+//            node.parent.childList.remove(node);
+//        }
     }
 
     protected void forward_propagation(Node node, RealVector feature) {
+//        System.out.println("forward_propagation on node: node.branchType=" + node.branchType + ", node.depth: " + node.depth);
+        node.hasBeenForwarded = true;
         if (node.isRootNode) {
             node.hideInput = feature;
             node.hideOutput = feature;
@@ -179,21 +185,22 @@ public class BaseAtnnModel {
             node.classifierOutput = softmax(node.classifierInput);
         } else {
             node.hideInput = node.hW.operate(feature).add(node.hb);
-//            checkIfMatrixContainsNaN(node.hW, "node.hW");
-//            checkIfVectorContainsNaN(node.hb, "node.hb");
-//            checkIfMatrixContainsInfinity(node.hW, "node.hW"); // todo to miewa infinity
-//            checkIfVectorContainsInfinity(node.hb, "node.hb");
-//            checkIfVectorContainsNaN(feature, "feature");
             node.hideOutput = node.relu(node.hideInput);
             node.classifierInput = node.cW.operate(node.hideOutput).add(node.cb);
             node.classifierOutput = softmax(node.classifierInput);
         }
 
         for (Node child : node.childList) {
-            if (!driftAlert && child.branchType != activeBranch && child.branchType != 0)
+            if (should_forward_propagate_node(child))
+                forward_propagation(child, node.hideOutput);
+            else
                 continue;
-            forward_propagation(child, node.hideOutput);
         }
+    }
+
+    protected boolean should_forward_propagate_node(Node node) {
+        return driftAlert || node.branchType == activeBranch || node.branchType == 0; // todo jan 2 wydzieliłem
+//        return !(!driftAlert && node.branchType != activeBranch && node.branchType != 0);
     }
 
     protected boolean should_back_propagate_node(Node node) {
@@ -209,6 +216,7 @@ public class BaseAtnnModel {
             }
         }
 
+//        System.out.println("backpropagate on node: node.branchType=" + node.branchType + ", node.depth: " + node.depth);
         node.lastPredictLoss = AtnnUtils.cross_entropy(node.classifierOutput, trueLabel);
         node.dev_cInput = node.classifierOutput.subtract(trueLabel).mapMultiply(node.weight);
         node.dev_cW = node.dev_cInput.outerProduct(node.hideOutput);
@@ -271,7 +279,7 @@ public class BaseAtnnModel {
     protected void update_model(Node node) {
 
         for (Node child : node.childList) {
-            if (child.branchType == 0 || child.branchType == activeBranch) {
+            if (should_back_propagate_node(child)) {
                 update_model(child);
             }
         }
@@ -359,16 +367,20 @@ public class BaseAtnnModel {
         for (Map.Entry<Integer, List<Node>> entry : nodeList.entrySet()) {
             int branch = entry.getKey();
             List<Node> nodeList = entry.getValue();
+//
+//            if (branch == 1) {
+//                System.out.println("xd");
+//            }
 
             RealVector branchOutput = new ArrayRealVector(cNeuronNum);
             for (Node node : nodeList) {
                 RealVector output = node.classifierOutput;
-                branchOutput = branchOutput.add(output.mapMultiply(node.weight));
+                branchOutput = branchOutput.add(output.mapMultiply(node.weight)); // weight jest 0 a być zero nie powinno
             }
 
             double sumOfBranchOutput = Arrays.stream(branchOutput.toArray()).sum();
 
-            modelOutput.put(branch, branchOutput.mapMultiply(1 / sumOfBranchOutput));
+            modelOutput.put(branch, branchOutput.mapMultiply(1 / sumOfBranchOutput)); // todo tutaj dla nowego brancha jest zero w sumie i stad same dziwności i nany potem
         }
         return modelOutput;
     }
@@ -380,6 +392,9 @@ public class BaseAtnnModel {
             if (!lossList.containsKey(branch)) {
                 lossList.put(branch, new ArrayList<>());
             }
+//            if (branch == 1) {
+//                System.out.println("xd");
+//            }
             lossList.get(branch).add(AtnnUtils.cross_entropy(branchOutput, label));
             if (lossList.get(branch).size() > lossLen) {
                 lossList.put(branch, lossList.get(branch).subList(lossList.get(branch).size() - lossLen, lossList.get(branch).size()));
@@ -387,16 +402,23 @@ public class BaseAtnnModel {
         }
     }
 
+    protected boolean shouldSkipUpdatingLossStatistics(List<Double> losslist) {
+        return losslist.size() < lossLen;
+    }
+
     protected void update_loss_statistics() {
         for (Map.Entry<Integer, List<Double>> entry : lossList.entrySet()) {
             int branch = entry.getKey();
             List<Double> losslist = entry.getValue();
 
-            if (losslist.size() < lossLen) {
+//            System.out.println("updating loss statistics for branch: " + branch + ", losslist.size(): " + losslist.size());
+
+            if (shouldSkipUpdatingLossStatistics(losslist)) { // todo to jest sprawca
                 continue;
             }
 
             double mean = losslist.stream().reduce(0.0, Double::sum) / losslist.size();
+//            System.out.println("losslist: " + losslist);
             double variance = AtnnUtils.calculateStandardDeviation(losslist);
 
             List<Double> prev_loss = losslist.subList(losslist.size() - splitLen, losslist.size());
@@ -405,22 +427,44 @@ public class BaseAtnnModel {
 
             if (!lossStatisticsList.containsKey(branch)) {
                 Map<String, Double> dict = new HashMap<>();
-                dict.put("mean", mean);
-                dict.put("var", variance);
                 dict.put("prev_mean", prev_mean);
                 dict.put("prev_var", prev_var);
                 lossStatisticsList.put(branch, dict);
             } else {
-                if ((mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")) { // todo to jest min
-                    lossStatisticsList.get(branch).put("mean", mean);
-                    lossStatisticsList.get(branch).put("var", variance);
-                }
                 lossStatisticsList.get(branch).put("prev_mean", prev_mean);
                 lossStatisticsList.get(branch).put("prev_var", prev_var);
             }
+
+            if (losslist.size() >= lossLen) {
+                if (!lossStatisticsList.get(branch).containsKey("mean")) {
+                    lossStatisticsList.get(branch).put("mean", mean);
+                    lossStatisticsList.get(branch).put("var", variance);
+                } else if ((mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")
+                ) { // todo to jest min
+                    lossStatisticsList.get(branch).put("mean", mean);
+                    lossStatisticsList.get(branch).put("var", variance);
+                }
+            }
+
+
+
+//
+//            else {
+//                if (losslist.size() >= lossLen
+//                        && (mean + variance) < lossStatisticsList.get(branch).get("mean") + lossStatisticsList.get(branch).get("var")
+//                ) { // todo to jest min
+//                    lossStatisticsList.get(branch).put("mean", mean);
+//                    lossStatisticsList.get(branch).put("var", variance);
+//                }
+//                lossStatisticsList.get(branch).put("prev_mean", prev_mean);
+//                lossStatisticsList.get(branch).put("prev_var", prev_var);
+//            }
+
+//            System.out.println("lossStatisticsList.get(" + branch + "): " + lossStatisticsList.get(branch));
+//            System.out.println("lossStatisticsList.get(" + branch + ").get(\"prev_mean\"): " + lossStatisticsList.get(branch).get("prev_mean"));
         }
 
-        if (lossStatisticsList.containsKey(activeBranch)) {
+        if (lossStatisticsList.containsKey(activeBranch) && lossStatisticsList.get(activeBranch).containsKey("mean")) {
             driftAlertDetection();
         }
 
@@ -454,7 +498,7 @@ public class BaseAtnnModel {
         }
     }
 
-    protected void reset_weight() {
+    protected void reset_weight_in_active_branch() {
         List<Node> nodes = get_active_node_list();
         for (Node node : nodes) {
             node.weight = 1.0 / nodes.size();
@@ -469,7 +513,7 @@ public class BaseAtnnModel {
         // todo dec 29 - przepisywanie na zgodnie z artykułem
         Map<String, Double> activeBranchLoss = lossStatisticsList.get(activeBranch);
         double conceptDriftThreshold = activeBranchLoss.get("mean") + confid * activeBranchLoss.get("var");
-        if (activeBranchLoss.get("prev_var") + activeBranchLoss.get("prev_mean") > conceptDriftThreshold) {
+        if (alertNum > splitLen && activeBranchLoss.get("prev_var") + activeBranchLoss.get("prev_mean") > conceptDriftThreshold) {
             int minLossBranch = lossStatisticsList.keySet().stream().min((k1, k2) -> lossStatisticsList.get(k1).get("prev_mean").compareTo(lossStatisticsList.get(k2).get("prev_mean"))).orElse(0); // todo nie wiem czy dobry default
             Map<String, Double> minLossMap = lossStatisticsList.get(minLossBranch);
             if (minLossMap.get("prev_var") + minLossMap.get("prev_mean") > conceptDriftThreshold) {
@@ -477,7 +521,7 @@ public class BaseAtnnModel {
                 update_fisherMatrix();
                 add_empty_branch();
                 lastDriftTime = trainTimes;
-                reset_weight();
+                reset_weight_in_active_branch();
             } else {
                 if (minLossBranch != activeBranch) {
                     driftStatus = DRIFT_STATUS_RECURRING;
@@ -516,26 +560,9 @@ public class BaseAtnnModel {
                 activeBranch,
                 get_active_node_list().get(0).depth,
                 get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
-                driftStatus
+                driftStatus,
+                Collections.emptyMap()
         );
-    }
-
-    protected void printModelStructure() {
-        System.out.println("\n*** Model structure ***\n");
-
-        for (Node node : activeNodeList) {
-            System.out.println("\nNode:\nnode.branchType: " + node.branchType + ", node.depth: " + node.depth);
-            System.out.println("hW: ");
-            System.out.println(node.hW);
-            System.out.println("hb: ");
-            System.out.println(node.hb);
-            System.out.println("cW: ");
-            System.out.println(node.cW);
-            System.out.println("cb: ");
-            System.out.println(node.cb);
-            System.out.println("\n");
-        }
-        System.out.println("\n*** Model structure end ***\n");
     }
 
     public void train_model(RealVector feature, RealVector label) {

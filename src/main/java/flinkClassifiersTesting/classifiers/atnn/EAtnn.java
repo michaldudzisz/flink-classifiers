@@ -27,7 +27,7 @@ public class EAtnn extends BaseClassifierClassifyAndTrain {
 
     int exampleNumber = 0;
 
-    BaseAtnnModel model;
+    EnhancedAtnnModel model;
 
     public EAtnn(Map<String, Integer> classEncoder) {
         classNum = classEncoder.keySet().size(); // classes may be defined not as in class encoder, can fix it later
@@ -45,6 +45,11 @@ public class EAtnn extends BaseClassifierClassifyAndTrain {
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
         model.train_model(feature, label);
+        // todo jan 2
+        // w performances chciałbym zwrócić tak: allBranches10_chosenBranch2_chosenBranchDepth4
+        BranchesInfo branchesInfo = model.getBranchesInfo();
+        performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.getBranchesInfoEAtnnString()));
+        performances.add(new Tuple2<>(DRIFT_STATUS, branchesInfo.getDriftStatusString()));
         return performances;
     }
 
@@ -64,7 +69,7 @@ public class EAtnn extends BaseClassifierClassifyAndTrain {
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new EnhancedAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         exampleNumber += 1;
@@ -74,10 +79,6 @@ public class EAtnn extends BaseClassifierClassifyAndTrain {
         double[] result = model.predict(feature).toArray();
         int predictedClass = IntStream.range(0, result.length).reduce((i, j) -> result[i] > result[j] ? i : j).getAsInt();
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
-        // w performances chciałbym zwrócić tak: allBranches10_chosenBranch2_chosenBranchDepth4
-        BranchesInfo branchesInfo = model.getBranchesInfo();
-        performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.getBranchesInfoString()));
-        performances.add(new Tuple2<>(DRIFT_STATUS, branchesInfo.getDriftStatusString()));
         return new Tuple2<>(predictedClass, performances);
     }
 
@@ -90,7 +91,7 @@ public class EAtnn extends BaseClassifierClassifyAndTrain {
     public void bootstrapTrainImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new EnhancedAtnnModel(featureLen, hNeuronNum, classNum);
             model.init_node_weight();
         }
         exampleNumber += 1;

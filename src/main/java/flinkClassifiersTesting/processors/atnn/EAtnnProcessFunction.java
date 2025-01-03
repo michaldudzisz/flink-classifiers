@@ -28,9 +28,9 @@ public abstract class EAtnnProcessFunction extends BaseProcessFunctionClassifyAn
     @Override
     public List<String> csvColumnsHeader() {
         return List.of(
+                BaseClassifierFields.CLASSIFICATION_DURATION,
                 AtnnClassifierFields.BRANCH_STRUCTURE,
                 AtnnClassifierFields.DRIFT_STATUS,
-                BaseClassifierFields.CLASSIFICATION_DURATION,
                 BaseClassifierFields.TRAINING_DURATION
         );
     }

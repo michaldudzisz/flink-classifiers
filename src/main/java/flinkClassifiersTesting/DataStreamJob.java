@@ -79,9 +79,11 @@ public class DataStreamJob {
 //
 
         String[] datasets = {
-                "incremental_drift_synth_attr2_speed0.5_len20000",
-                "incremental_drift_synth_attr2_speed1.0_len20000",
-//                "incremental_drift_synth_attr2_speed2.0_len20000",
+//                "incremental_drift_synth_attr2_speed0.05_len20000",
+//                "incremental_drift_synth_attr2_speed0.2_len20000",
+//                "incremental_drift_synth_attr2_speed0.5_len20000",
+//                "incremental_drift_synth_attr2_speed1.0_len20000",
+                "incremental_drift_synth_attr2_speed2.0_len20000",
 //                "incremental_drift_synth_attr2_speed4.0_len20000",
 //                "incremental_drift_synth_attr2_speed6.0_len20000",
 //                "incremental_drift_synth_attr2_speed10.0_len20000",
@@ -92,7 +94,7 @@ public class DataStreamJob {
         );
         for (String d : datasets) {
             datasetPath = basePath + "/datasets/" + d + ".csv";
-            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
         }
 //        List<AtnnClassifierParams> atnnParams = List.of(
 //                new AtnnClassifierParams()
