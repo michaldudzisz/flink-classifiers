@@ -11,7 +11,8 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
     BranchesToTrainDuringDriftAlert branchesToTrainDuringDriftAlert = new BranchesToTrainDuringDriftAlert();
 
     public EnhancedAtnnModel(int featureNum, int hNeuronNum, int cNeuronNum) {
-        super(featureNum, hNeuronNum, cNeuronNum);
+        super(featureNum, hNeuronNum, cNeuronNum, 0, 0);
+        throw new RuntimeException("XD");
     }
 
     @Override
@@ -157,7 +158,7 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 
     @Override
     protected void add_empty_child_node(Node parentNode, int branchType, double weight) { // todo tutaj zero ???????
-        Node child = new Node(hNeuronNum, cNeuronNum, branchType);
+        Node child = new Node(hNeuronNum, cNeuronNum, branchType, initialLearningRate);
         child.parent = parentNode;
         child.depth = child.parent.depth + 1;
         child.init_weight();

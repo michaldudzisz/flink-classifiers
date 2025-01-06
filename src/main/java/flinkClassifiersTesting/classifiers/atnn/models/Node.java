@@ -11,12 +11,12 @@ import java.util.List;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealVector;
 
 public class Node {
-    final double initialLearnRate = 0.02; // 0.0006 0.02
+    double initialLearnRate; //  = 0.02; // 0.0006 0.02
 
     int branchType = 0;
     boolean isShare = false;
-    double learnRate = initialLearnRate;
-    double minLR = 0.001; // 0.0005 <- wartość z canda 0.001
+    double learnRate;
+    double minLR = 0.001; // 0.0005 <- wartość z canda
     int hNeuronNum;
     int cNeuronNum;
     boolean isRootNode = false;
@@ -52,10 +52,12 @@ public class Node {
     RealVector lastConcept_hb = null;
 
 
-    public Node(int hNeuronNum, int cNeuronNum, int branchType) {
+    public Node(int hNeuronNum, int cNeuronNum, int branchType, double initialLearnRate) {
         this.hNeuronNum = hNeuronNum;
         this.cNeuronNum = cNeuronNum;
         this.branchType = branchType;
+        this.initialLearnRate = initialLearnRate;
+        this.learnRate = initialLearnRate;
         init_b();
     }
 
@@ -125,6 +127,7 @@ public class Node {
         Node copied = new Node();
         copied.branchType = branchType;
         copied.isShare = false;
+        copied.initialLearnRate = this.initialLearnRate;
         copied.learnRate = this.initialLearnRate; // powrót do dużego lr
         copied.minLR = this.minLR;
         copied.hNeuronNum = this.hNeuronNum;

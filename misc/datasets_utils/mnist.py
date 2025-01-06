@@ -12,8 +12,6 @@ import math
 _MNIST_PATH = "datasets/mnist.csv"
 
 
-# TODO zrobić normalizacje datasetu, może wtedy bedzie to lepiej działało i nie będzie wywalało Inf w ATNN
-
 class MNIST:
 
     _ATTRIBUTES = 28 * 28

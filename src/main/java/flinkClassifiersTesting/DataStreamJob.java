@@ -55,6 +55,7 @@ public class DataStreamJob {
         String basePath = getBaseDirectory();
 //        String dataset = "elec-maly";
 //        String dataset = "elec";
+        String dataset = "mnist_abrupt_atnn_like";
 //        String dataset = "sea_abr";
 //        String dataset = "sea_grad";
 //        String dataset = "mnist_grad";
@@ -64,10 +65,26 @@ public class DataStreamJob {
 //        String dataset = "mnist_grad_powolny_4x_szybszy";
 //        String dataset = "mnist_grad_atnnowy_prosty";
 //        String dataset = "sea_grad";
-        String dataset = "incremental_drift_synth_attr2_speed5.0";
+//        String dataset = "incremental_drift_synth_attr2_speed5.0";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
 //        long bootstrapSamplesLimit = 500L;
         long bootstrapSamplesLimit = 0L;
+
+        // ATNN artykułowo: 0.02, 256, 5000
+        List<AtnnClassifierParams> atnnParams = List.of(
+                new AtnnClassifierParams(2E-2, 256, 0),
+                new AtnnClassifierParams(2E-2, 256, 50),
+                new AtnnClassifierParams(2E-2, 256, 500),
+                new AtnnClassifierParams(2E-2, 256, 5000),
+                new AtnnClassifierParams(2E-2, 256, 50000)
+//                new AtnnClassifierParams(2E-2, 1024, 5000)
+        );
+        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+
+
+
+
+
 
 //        List<VfdtClassifierParams> vfdtParams = List.of(new VfdtClassifierParams(0.2, 0.1, 10));
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, VfdtProcessFactory.vfdt(vfdtParams));
@@ -78,30 +95,33 @@ public class DataStreamJob {
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AdaptiveRandomForestProcessFactory.arf(arfParams));
 //
 
-        String[] datasets = {
+//        String[] datasets = {
 //                "incremental_drift_synth_attr2_speed0.05_len20000",
 //                "incremental_drift_synth_attr2_speed0.2_len20000",
 //                "incremental_drift_synth_attr2_speed0.5_len20000",
 //                "incremental_drift_synth_attr2_speed1.0_len20000",
-                "incremental_drift_synth_attr2_speed2.0_len20000",
-//                "incremental_drift_synth_attr2_speed4.0_len20000",
-//                "incremental_drift_synth_attr2_speed6.0_len20000",
+//                "incremental_drift_synth_attr2_speed2.0_len20000",
+//                "incremental_drift_synth_attr2_speed5.0_len20000",
 //                "incremental_drift_synth_attr2_speed10.0_len20000",
-        };
+//        };
 
-        List<AtnnClassifierParams> atnnParams = List.of(
-                new AtnnClassifierParams()
-        );
-        for (String d : datasets) {
-            datasetPath = basePath + "/datasets/" + d + ".csv";
-            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
-        }
 //        List<AtnnClassifierParams> atnnParams = List.of(
 //                new AtnnClassifierParams()
 //        );
-//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
+//        for (String d : datasets) {
+//            datasetPath = basePath + "/datasets/" + d + ".csv";
+//            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+//        }
+
+//        // ATNN artykułowo: 0.02, 256, 5000
+//        List<AtnnClassifierParams> atnnParams = List.of(
+//                new AtnnClassifierParams(1E-2, 64, 5000),
+//                new AtnnClassifierParams(1E-3, 128, 5000)
+//        );
 //        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
 
+
+//        FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
 
 //        List<CandClassifierParams> candParams = List.of(
 //                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, false)

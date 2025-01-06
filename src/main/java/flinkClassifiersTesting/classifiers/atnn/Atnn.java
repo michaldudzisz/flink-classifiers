@@ -5,6 +5,8 @@ import flinkClassifiersTesting.classifiers.atnn.models.BaseAtnnModel;
 import flinkClassifiersTesting.classifiers.atnn.models.EnhancedAtnnModel;
 import flinkClassifiersTesting.classifiers.base.BaseClassifierClassifyAndTrain;
 import flinkClassifiersTesting.inputs.Example;
+import flinkClassifiersTesting.processors.factory.atnn.AtnnClassifierParams;
+import flinkClassifiersTesting.processors.factory.cand.CandClassifierParams;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.flink.api.java.tuple.Tuple2;
 
@@ -15,22 +17,28 @@ import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.BRAN
 import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.DRIFT_STATUS;
 import static org.apache.commons.math3.linear.MatrixUtils.createRealVector;
 
-/*
-This class is a flinkClassifiersTesting wrapper for moa.classifiers.deeplearning.CAND
-*/
+
 public class Atnn extends BaseClassifierClassifyAndTrain {
 
     int featureLen;
     int classNum;
 
-    int hNeuronNum = 256;
+    int hNeuronNum;
+    double initialLearningRate;
+    int lambda;
 
     int exampleNumber = 0;
 
     BaseAtnnModel model;
 
-    public Atnn(Map<String, Integer> classEncoder) {
+    public Atnn(
+            Map<String, Integer> classEncoder,
+            AtnnClassifierParams params
+    ) {
         classNum = classEncoder.keySet().size(); // classes may be defined not as in class encoder, can fix it later
+        hNeuronNum = params.hiddenLayerSize;
+        initialLearningRate = params.learningRate;
+        lambda = params.lambda;
     }
 
 
@@ -39,7 +47,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         // przyjmuje i zwraca performance
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
             model.init_node_weight();
         }
         RealVector feature = createRealVector(example.getAttributes());
@@ -64,7 +72,7 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
             model.init_node_weight();
         }
         exampleNumber += 1;
@@ -90,13 +98,13 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     public void bootstrapTrainImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum);
+            model = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
             model.init_node_weight();
         }
         exampleNumber += 1;
         System.out.println("bi: " + exampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        model.train_model(feature, label); // todo zmienić, bo dwa razy sie bedzie wykonywalo
+        model.train_model(feature, label);
     }
 }

@@ -7,7 +7,7 @@ public class BranchesInfo {
     final int activeBranch;
     final int activeBranchGrowingPoint;
     final int activeBranchDepth;
-    final Map<String, String> eatnnLosses;
+    final Map<String, String> atnnLosses;
 
     final String driftStatus;
 
@@ -24,20 +24,21 @@ public class BranchesInfo {
         this.activeBranchGrowingPoint = activeBranchGrowingPoint;
         this.activeBranchDepth = activeBranchDepth;
         this.driftStatus = driftStatus;
-        this.eatnnLosses = eatnnLosses;
+        this.atnnLosses = eatnnLosses;
     }
 
     public String getBranchesInfoString() {
         return "allBranches" + allBranches +
                 "_activeBranch" + activeBranch +
                 "_growingPoint" + activeBranchGrowingPoint +
-                "_activeBranchDepth" + activeBranchDepth;
+                "_activeBranchDepth" + activeBranchDepth +
+                "_active" + atnnLosses.get("active");
     }
 
     public String getBranchesInfoEAtnnString() {
-        String losses = "active" + eatnnLosses.get("active") +
-                "_empty" + eatnnLosses.get("empty") +
-                "_cloned" + eatnnLosses.get("cloned");
+        String losses = "active" + atnnLosses.get("active") +
+                "_empty" + atnnLosses.get("empty") +
+                "_cloned" + atnnLosses.get("cloned");
         return "allBranches" + allBranches +
                 "_activeBranch" + activeBranch +
                 "_growingPoint" + activeBranchGrowingPoint +

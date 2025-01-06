@@ -42,16 +42,21 @@ public class BaseAtnnModel {
     final String DRIFT_STATUS_RECURRING = "recurring";
     String driftStatus = DRIFT_STATUS_NO_DRIFT;
 
-    public BaseAtnnModel(int featureNum, int hNeuronNum, int cNeuronNum) {
+
+
+    double initialLearningRate;
+    public BaseAtnnModel(int featureNum, int hNeuronNum, int cNeuronNum, double initialLearningRate, int lambda) {
         this.featureNum = featureNum;
         this.hNeuronNum = hNeuronNum;
         this.cNeuronNum = cNeuronNum;
+        this.initialLearningRate = initialLearningRate;
+        this.lamda = lambda;
         init_model();
     }
 
     public void init_model() {
         int branchType = 0;
-        Node root = new Node(featureNum, cNeuronNum, branchType);
+        Node root = new Node(featureNum, cNeuronNum, branchType, initialLearningRate);
         root.isRootNode = true;
         root.init_weight();
 
@@ -71,7 +76,7 @@ public class BaseAtnnModel {
     }
 
     protected void add_empty_child_node(Node parentNode, int branchType, double weight) {
-        Node child = new Node(hNeuronNum, cNeuronNum, branchType);
+        Node child = new Node(hNeuronNum, cNeuronNum, branchType, initialLearningRate);
         child.parent = parentNode;
         child.depth = child.parent.depth + 1;
         child.init_weight();
@@ -555,13 +560,22 @@ public class BaseAtnnModel {
     }
 
     public BranchesInfo getBranchesInfo() {
+        double activeLoss = 0;
+        Map<String, Double> activeBranchStatistics = lossStatisticsList.get(activeBranch);
+        if (activeBranchStatistics != null)
+            activeLoss = activeBranchStatistics.get("prev_mean");
+//        System.out.println("activeLoss: " + activeLoss);
+
+        Map<String, String> atnnLosses = new HashMap<>();
+        atnnLosses.put("active", String.valueOf(activeLoss));
+
         return new BranchesInfo(
                 branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
                 activeBranch,
                 get_active_node_list().get(0).depth,
                 get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
                 driftStatus,
-                Collections.emptyMap()
+                atnnLosses
         );
     }
 
