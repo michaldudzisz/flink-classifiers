@@ -280,6 +280,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     else:
         unit = getUnit(performanceType)
 
+    speed_value = 0
     for classifier in classifierResults:
         y = mapper(classifier.results[performanceType])
 
@@ -287,13 +288,13 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
             sampleNumbers = sampleNumberMapper(np.cumsum(np.ones_like(y)))
             curve = axes[0].plot(sampleNumbers, y, label="dokładność")
 
-            # match = re.search(r'speed([0-9]*\.?[0-9]+)', dataset)
-            # if match:
-            #     speed_value = float(match.group(1))
-            #     print(f'Liczba po "speed": {speed_value}')
-            # else:
-            #     print('Nie znaleziono liczby po "speed".')
-            # axes[0].set_title(r"Dokładność klasyfikacji ATNN w oknie 500 próbek, $\mu_\text{końcowe}=" +  str(speed_value) + "$")
+            match = re.search(r'a([0-9]*\.?[0-9]+)', dataset)
+            if match:
+                speed_value = float(match.group(1))
+                print(f'Liczba po "a": {speed_value}')
+            else:
+                print('Nie znaleziono liczby po "speed".')
+            axes[0].set_title(r"Dokładność klasyfikacji ATNN w oknie 500 próbek, $a=" +  str(int(speed_value)) + "$")
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}
@@ -306,14 +307,26 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                     else:
                         axes[0].axvline(x=idx, color='#eb9834', linestyle=':', linewidth=1)
                 if driftStatus == "new_detected_cloned":
-                    print(f"dryf new_detected_copied dla x = {idx}")
-                    axes[0].axvline(x=idx, color='#eb34e1', linestyle=':', linewidth=1, label='new_detected_cloned')
+                    print(f"dryf new_detected_cloned dla x = {idx}")
+                    if not drift_status_already_added.get("new_detected_cloned", False):
+                        axes[0].axvline(x=idx, color='#eb34e1', linestyle=':', linewidth=1, label='sklonowano aktywną gałąź')
+                        drift_status_already_added["new_detected_cloned"] = True
+                    else:
+                        axes[0].axvline(x=idx, color='#eb34e1', linestyle=':', linewidth=1)
                 if driftStatus == "new_detected_empty":
                     print(f"dryf new_detected_empty dla x = {idx}")
-                    axes[0].axvline(x=idx, color='#45bfa5', linestyle=':', linewidth=1, label='new_detected_empty')
+                    if not drift_status_already_added.get("new_detected_empty", False):
+                        axes[0].axvline(x=idx, color='#45bfa5', linestyle=':', linewidth=1, label='dodano pustą gałąź')
+                        drift_status_already_added["new_detected_empty"] = True
+                    else:
+                        axes[0].axvline(x=idx, color='#45bfa5', linestyle=':', linewidth=1)
                 if driftStatus == "current_evolving":
                     print(f"dryf current_evolving dla x = {idx}")
-                    axes[0].axvline(x=idx, color='#52ad36', linestyle=':', linewidth=1, label='current_evolving')
+                    if not drift_status_already_added.get("current_evolving", False):
+                        axes[0].axvline(x=idx, color='#52ad36', linestyle=':', linewidth=1, label='pozwolono ewoluować aktywnej gałęzi')
+                        drift_status_already_added["current_evolving"] = True
+                    else:
+                        axes[0].axvline(x=idx, color='#52ad36', linestyle=':', linewidth=1)
                 if driftStatus == "recurring":
                     print(f"dryf recurring dla x = {idx}")
                     if not drift_status_already_added.get("recurring", False):
@@ -345,8 +358,8 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                     trunk_line.append(result["growingPoint"])
                 branch_line.append(result["growingPoint"] + result["activeBranchDepth"])
 
-            axes[1].plot(sampleNumbers, trunk_line[-len(sampleNumbers):], label="Węzły pnia")
-            axes[1].plot(sampleNumbers, branch_line[-len(sampleNumbers):], label="Wszystkie węzły")
+            axes[1].plot(sampleNumbers, trunk_line[-len(sampleNumbers):], label="Aktywne węzły pnia")
+            axes[1].plot(sampleNumbers, branch_line[-len(sampleNumbers):], label="Wszystkie aktywne węzły")
             axes[1].legend()
             axes[1].set_ylim(bottom=0)
             axes[1].set_title("Liczba wykorzystywanych węzłów w drzewie ATNN")
@@ -369,7 +382,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
 
             axes[2].plot(sampleNumbers, active_line[-len(sampleNumbers):])
             axes[2].set_ylim(bottom=0)
-            axes[2].set_ylim(top=0.7) # todo można to zmieniać
+            axes[2].set_ylim(top=0.85) # todo można to zmieniać
             axes[2].set_ylabel("Entropia krzyżowa")
             axes[2].set_title("Średnia wartość funkcji straty w oknie 50 próbek")
             axes[2].legend()
@@ -389,6 +402,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     axes[2].set_xlabel(r"t")
 
     plt.tight_layout()
+    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/porownanie_dryfow_gradual/atnn_porownanie_dryfow_gradual_{int(speed_value)}.pdf', format='pdf')
     plt.show(block=False)
 
 

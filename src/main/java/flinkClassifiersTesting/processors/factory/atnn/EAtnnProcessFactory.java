@@ -19,7 +19,7 @@ public class EAtnnProcessFactory {
                 return new EAtnnProcessFunction(name, dataset, samplesLimit, classEncoder) {
                     @Override
                     protected EAtnn createClassifier() {
-                        return new EAtnn(classEncoder);
+                        return new EAtnn(classEncoder, params);
                     }
                 };
             }

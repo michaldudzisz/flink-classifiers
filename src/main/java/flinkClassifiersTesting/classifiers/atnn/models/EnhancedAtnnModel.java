@@ -10,9 +10,8 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 
     BranchesToTrainDuringDriftAlert branchesToTrainDuringDriftAlert = new BranchesToTrainDuringDriftAlert();
 
-    public EnhancedAtnnModel(int featureNum, int hNeuronNum, int cNeuronNum) {
-        super(featureNum, hNeuronNum, cNeuronNum, 0, 0);
-        throw new RuntimeException("XD");
+    public EnhancedAtnnModel(int featureNum, int hNeuronNum, int cNeuronNum, double initialLearningRate, int lambda) {
+        super(featureNum, hNeuronNum, cNeuronNum, initialLearningRate, lambda);
     }
 
     @Override
@@ -58,9 +57,11 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
         if (activeBranch == emptyBranch) {
             removeBranch(clonedBranch);
         } else if (activeBranch == clonedBranch) {
-            removeBranch(emptyBranch);
+            if (emptyBranch != -1)
+                removeBranch(emptyBranch);
         } else {
-            removeBranch(emptyBranch);
+            if (emptyBranch != -1)
+                removeBranch(emptyBranch);
             removeBranch(clonedBranch);
         }
 
@@ -139,7 +140,7 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 
     @Override
     protected void add_empty_branch() {
-        Node parent = weight_sim(); // TODO TU JEST PROBLEM, ZAWSZE W ZŁYM MIEJSCU TO BĘDZIE BO POD SPODEM alertNum == 0
+        Node parent = weight_sim();
         // przykład jak to rozwiązać - dodać w momencie wykrycia dryfu a potem jakoś douczyć
         branchNum = branchNum + 1;
         branchList.add(branchNum);
@@ -224,10 +225,12 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
             if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) { // todo zmyśliłem 10_000, żeby tego nigdy nie było
                 driftAlert = true;
                 driftStatus = DRIFT_STATUS_WARN;
-                add_empty_branch();
                 add_cloned_branch();
             }
         } else {
+            if (alertNum == 50) {
+                add_empty_branch();
+            }
             if (activeBranchRecentMean + activeBranchRecentVar < driftWarnLevel) {
                 driftAlert = false;
                 alertNum = 0;
@@ -250,7 +253,10 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 //        System.out.println("activeLoss: " + activeLoss);
         double emptyBranchLoss = 0;
         double clonedBranchLoss = 0;
-        if (!branchesToTrainDuringDriftAlert.isEmpty() && nodeList.get(branchesToTrainDuringDriftAlert.empty).get(0).hasBeenForwarded) {
+        if (!branchesToTrainDuringDriftAlert.isEmpty()
+                && branchesToTrainDuringDriftAlert.empty != -1
+                && nodeList.get(branchesToTrainDuringDriftAlert.empty).get(0).hasBeenForwarded
+        ) {
             int emptyBranch = branchesToTrainDuringDriftAlert.empty;
             int clonedBranch = branchesToTrainDuringDriftAlert.cloned;
 //            System.out.println("emptyBranch: " + emptyBranch + ", clonedBranch: " + clonedBranch);

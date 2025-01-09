@@ -180,7 +180,7 @@ public class BaseAtnnModel {
 //        }
     }
 
-    protected void forward_propagation(Node node, RealVector feature) {
+    protected void  forward_propagation(Node node, RealVector feature) {
 //        System.out.println("forward_propagation on node: node.branchType=" + node.branchType + ", node.depth: " + node.depth);
         node.hasBeenForwarded = true;
         if (node.isRootNode) {
