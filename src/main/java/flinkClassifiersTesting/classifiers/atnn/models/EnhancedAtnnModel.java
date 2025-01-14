@@ -215,14 +215,14 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
 
     @Override
     protected void driftAlertDetection() {
-        double driftWarnLevel = lossStatisticsList.get(activeBranch).get("mean") + 2 * lossStatisticsList.get(activeBranch).get("var"); // todo zmieniłem confid na 2, żeby było jak w wartykule
+        double driftWarnLevel = lossStatisticsList.get(activeBranch).get("mean") + 2 * lossStatisticsList.get(activeBranch).get("var"); // todo zmieniłem confid na 2, żeby było jak w w artykule
         List<Double> lossWin = lossList.get(activeBranch).subList(lossList.get(activeBranch).size() - splitLen, lossList.get(activeBranch).size());
 
         double activeBranchRecentMean = lossWin.stream().reduce(0.0, Double::sum) / lossWin.size();
         double activeBranchRecentVar = AtnnUtils.calculateStandardDeviation(lossWin);
 
         if (!driftAlert) {
-            if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) { // todo zmyśliłem 10_000, żeby tego nigdy nie było
+            if (activeBranchRecentMean + activeBranchRecentVar > driftWarnLevel) {
                 driftAlert = true;
                 driftStatus = DRIFT_STATUS_WARN;
                 add_cloned_branch();
@@ -271,13 +271,33 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
         eatnnLosses.put("empty", String.valueOf(emptyBranchLoss));
         eatnnLosses.put("cloned", String.valueOf(clonedBranchLoss));
 
+        int clonedNodesToLearn = 0;
+        if (branchesToTrainDuringDriftAlert.cloned != -1) {
+            clonedNodesToLearn = nodeList.get(branchesToTrainDuringDriftAlert.cloned).size();
+        }
+
+        int emptyNodesToLearn = 0;
+        if (branchesToTrainDuringDriftAlert.empty != -1) {
+            emptyNodesToLearn = nodeList.get(branchesToTrainDuringDriftAlert.empty).size();
+        }
+
+        int normalNodesToLearn = 0;
+        if (activeBranch == 0) {
+            normalNodesToLearn = get_active_node_list().size();
+        } else {
+            normalNodesToLearn =  get_active_node_list().size() + get_active_node_list().get(0).depth + 1; // dodaję 1, bo root ma depth 0
+        }
+
         return new BranchesInfo(
                 branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
                 activeBranch,
                 get_active_node_list().get(0).depth,
                 get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
                 driftStatus,
-                eatnnLosses
+                eatnnLosses,
+                clonedNodesToLearn,
+                emptyNodesToLearn,
+                normalNodesToLearn
         );
     }
 

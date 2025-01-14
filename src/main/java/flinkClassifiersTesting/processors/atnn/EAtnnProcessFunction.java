@@ -31,6 +31,9 @@ public abstract class EAtnnProcessFunction extends BaseProcessFunctionClassifyAn
                 BaseClassifierFields.CLASSIFICATION_DURATION,
                 AtnnClassifierFields.BRANCH_STRUCTURE,
                 AtnnClassifierFields.DRIFT_STATUS,
+                AtnnClassifierFields.CLONED_NODES_TO_TRAIN,
+                AtnnClassifierFields.EMPTY_NODES_TO_TRAIN,
+                AtnnClassifierFields.NORMAL_NODES_TO_TRAIN,
                 BaseClassifierFields.TRAINING_DURATION
         );
     }

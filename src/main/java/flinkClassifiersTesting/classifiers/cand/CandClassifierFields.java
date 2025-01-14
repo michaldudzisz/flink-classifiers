@@ -18,7 +18,7 @@ public class CandClassifierFields {
         }
 
         for (int i = 1; i < losses.size(); i++) {
-            s.append(";").append(losses.get(i).f0).append(":").append(losses.get(i).f1); // "nn_name:loss_value"
+            s.append(";").append(losses.get(i).f0).append(":").append(losses.get(i).f1); // ";nn_name:loss_value"
         }
 
         return s.toString();

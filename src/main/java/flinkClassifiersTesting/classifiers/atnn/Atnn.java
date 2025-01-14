@@ -1,5 +1,8 @@
 package flinkClassifiersTesting.classifiers.atnn;
 
+import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.CLONED_NODES_TO_TRAIN;
+import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.EMPTY_NODES_TO_TRAIN;
+import static flinkClassifiersTesting.classifiers.atnn.AtnnClassifierFields.NORMAL_NODES_TO_TRAIN;
 import flinkClassifiersTesting.classifiers.atnn.models.BranchesInfo;
 import flinkClassifiersTesting.classifiers.atnn.models.BaseAtnnModel;
 import flinkClassifiersTesting.classifiers.atnn.models.EnhancedAtnnModel;
@@ -28,8 +31,10 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
     int lambda;
 
     int exampleNumber = 0;
+    int bootstrapExampleNumber = 0;
 
     BaseAtnnModel model;
+    BaseAtnnModel bootstrapModel;
 
     public Atnn(
             Map<String, Integer> classEncoder,
@@ -86,6 +91,9 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         BranchesInfo branchesInfo = model.getBranchesInfo();
         performances.add(new Tuple2<>(BRANCH_STRUCTURE, branchesInfo.getBranchesInfoString()));
         performances.add(new Tuple2<>(DRIFT_STATUS, branchesInfo.getDriftStatusString()));
+        performances.add(new Tuple2<>(CLONED_NODES_TO_TRAIN, branchesInfo.getClonedBranchNodesToLearn()));
+        performances.add(new Tuple2<>(EMPTY_NODES_TO_TRAIN, branchesInfo.getEmptyBranchNodesToLearn()));
+        performances.add(new Tuple2<>(NORMAL_NODES_TO_TRAIN, branchesInfo.getNormalNodesToLearn()));
         return new Tuple2<>(predictedClass, performances);
     }
 
@@ -101,8 +109,15 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
             model = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
             model.init_node_weight();
         }
-        exampleNumber += 1;
-        System.out.println("bi: " + exampleNumber);
+
+        if (bootstrapModel == null) {
+            featureLen = example.getAttributes().length;
+            bootstrapModel = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
+            model.init_node_weight();
+        }
+
+        bootstrapExampleNumber += 1;
+        System.out.println("bi: " + bootstrapExampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
         model.train_model(feature, label);

@@ -68,7 +68,70 @@ public class DataStreamJob {
 //        String dataset = "incremental_drift_synth_attr2_speed5.0";
         String datasetPath = basePath + "/datasets/" + dataset + ".csv";
 //        long bootstrapSamplesLimit = 500L;
-        long bootstrapSamplesLimit = 0L;
+        long bootstrapSamplesLimit = 5_000L;
+
+        String[] datasets = {
+//                "elec",
+//                "weather_norm",
+//                "covtype_norm",
+//                "sea_abr",
+//                "sea_inc",
+//                "mnist_abrupt_atnn_like",
+//                "mnist_inc_20k_0.1x",
+                "mnist_inc_20k_0.5x",
+                "mnist_inc_20k_1x",
+                "mnist_inc_20k_2x",
+        };
+
+        List<CandClassifierParams> candParams = List.of(
+                new CandClassifierParams(CandClassifierParams.PoolSize.P10, 10, false),
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 30, false)
+        );
+        for (String d : datasets) {
+            datasetPath = basePath + "/datasets/" + d + ".csv";
+            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams));
+        }
+
+
+
+        String[] datasets2 = {
+                "elec",
+                "weather_norm",
+                "covtype_norm",
+                "sea_abr",
+                "sea_inc",
+                "mnist_abrupt_atnn_like",
+                "mnist_inc_20k_0.1x",
+                "mnist_inc_20k_0.5x",
+                "mnist_inc_20k_1x",
+                "mnist_inc_20k_2x",
+        };
+
+        List<CandClassifierParams> candParams2 = List.of(
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 6, false),
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 8, false),
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, false)
+        );
+        for (String d : datasets2) {
+            datasetPath = basePath + "/datasets/" + d + ".csv";
+            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams2));
+        }
+
+
+
+        List<CandClassifierParams> candParams3 = List.of(
+                new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, true)
+        );
+        FlinkProcessFactory.runJobs(
+                basePath + "/datasets/" + "mnist_abrupt_atnn_like" + ".csv",
+                bootstrapSamplesLimit,
+                CandProcessFactory.cand(candParams3)
+        );
+
+
+
+
+
 
         // ATNN artykułowo: 0.02, 256, 5000
 //        List<AtnnClassifierParams> atnnParams = List.of(
@@ -105,7 +168,12 @@ public class DataStreamJob {
 //        };
 
 
-        String[] datasets = {
+//        String[] datasets = {
+//                "elec",
+//                "mnist_inc_20k_0.1x",
+//                "mnist_inc_20k_0.5x",
+//                "mnist_inc_20k_1x",
+//                "mnist_inc_20k_2x",
 //                "mnist_inc_0.1x",
 //                "mnist_inc_0.5x",
 //                "mnist_inc_1x",
@@ -114,7 +182,7 @@ public class DataStreamJob {
 //                "gradual_drift_synth_attr2_a500_len20000",
 //                "gradual_drift_synth_attr2_a1000_len20000",
 //                "gradual_drift_synth_attr2_a1500_len20000",
-                "gradual_drift_synth_attr2_a2000_len20000",
+//                "gradual_drift_synth_attr2_a2000_len20000",
 //                "test_attr10_class5_dmag0.3",
 //                "test_attr100_class10_dmag1.0",
 //                "gradual_drift_synth_attr2_a10_len20000",
@@ -123,19 +191,19 @@ public class DataStreamJob {
 //                "gradual_drift_synth_attr2_a500_len20000",
 //                "gradual_drift_synth_attr2_a1000_len20000",
 //                "gradual_drift_synth_attr2_a1500_len20000",
-        };
-
-        List<AtnnClassifierParams> atnnParams = List.of(
-                new AtnnClassifierParams(2E-2, 256, 5000)
-        );
-        for (String d : datasets) {
-            datasetPath = basePath + "/datasets/" + d + ".csv";
-            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
-        }
-        for (String d : datasets) {
-            datasetPath = basePath + "/datasets/" + d + ".csv";
-            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
-        }
+//        };
+//
+//        List<AtnnClassifierParams> atnnParams = List.of(
+//                new AtnnClassifierParams(2E-2, 256, 5000)
+//        );
+//        for (String d : datasets) {
+//            datasetPath = basePath + "/datasets/" + d + ".csv";
+//            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+//        }
+//        for (String d : datasets) {
+//            datasetPath = basePath + "/datasets/" + d + ".csv";
+//            FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnnProcessFactory.atnn(atnnParams));
+//        }
 
 //        // ATNN artykułowo: 0.02, 256, 5000
 //        List<AtnnClassifierParams> atnnParams = List.of(

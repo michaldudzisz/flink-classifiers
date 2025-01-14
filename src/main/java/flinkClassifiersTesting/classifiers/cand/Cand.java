@@ -22,10 +22,18 @@ This class is a flinkClassifiersTesting wrapper for moa.classifiers.deeplearning
 public class Cand extends BaseClassifierClassifyAndTrain {
 
     private final CAND cand;
+    private final CAND bootstrapCand;
     private Instances datasetProperties = null;
     private boolean logAllMlpLosses = false;
 
     int samplesProcessed = 0;
+    int bootstrapSamplesProcessed = 0;
+
+    private final int classNumber;
+    private final int attributesNumber;
+    private final String datasetName;
+    private final Map<String, Integer> classEncoder;
+    private final CandClassifierParams params;
 
     public Cand(
             int classNumber,
@@ -35,30 +43,15 @@ public class Cand extends BaseClassifierClassifyAndTrain {
             CandClassifierParams params
     ) {
         System.setProperty("ai.djl.pytorch.native_helper", "ai.djl.pytorch.jni.NativeHelper");
+        this.classNumber = classNumber;
+        this.attributesNumber = attributesNumber;
+        this.datasetName = datasetName;
+        this.classEncoder = classEncoder;
+        this.params = params;
 
-        cand = new CAND();
+        cand = createCand();
+        bootstrapCand = createCand();
         setDatasetProperties(classNumber, attributesNumber, datasetName, classEncoder);
-
-        // configured parameters
-        cand.largerPool.setChosenIndex(params.pSize == CandClassifierParams.PoolSize.P10 ? 0 : 1); // |P|
-        cand.numberOfMLPsToTrainOption.setValue(params.mSize); // |M|
-        cand.backPropLossThreshold.setValue(params.backpropagationThreshold); // Math.pow(10, 10);
-        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(500); // 10% of elec
-
-        // output files
-        if (params.votingStatsFile != null)
-            cand.votesDumpFileName.setValue(params.votingStatsFile);
-//        cand.statsDumpFileName.setValue("cand_stats.txt");
-
-        if (params.logAllMlpLosses)
-            logAllMlpLosses = true;
-
-        cand.miniBatchSize.setValue(1); // 1 - incrementally
-        cand.numberOfLayersInEachMLP.setValue(1); // 1
-        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(1_000); // 1000
-        cand.useOneHotEncode.setValue(true); // t
-        cand.useNormalization.setValue(true); // t
-        cand.deviceTypeOption.setChosenIndex(1); // CPU
     }
 
     @Override
@@ -97,8 +90,11 @@ public class Cand extends BaseClassifierClassifyAndTrain {
     @Override
     public void bootstrapTrainImplementation(Example example) {
         // we do the line below so that MOA's Cand can increment samplesSeen counter
-        cand.getVotesForInstance(mapExampleToInstance(example, datasetProperties));
-        trainImplementation(example, example.getMappedClass(), null);
+        bootstrapSamplesProcessed++;
+        System.out.println("bi: " + bootstrapSamplesProcessed);
+        bootstrapCand.getVotesForInstance(mapExampleToInstance(example, datasetProperties));
+        Instance moaInstance = mapExampleToInstance(example, datasetProperties);
+        bootstrapCand.trainOnInstanceImpl(moaInstance);
     }
 
     private void setDatasetProperties(
@@ -148,5 +144,33 @@ public class Cand extends BaseClassifierClassifyAndTrain {
 
     private Tuple2<String, Object> emptyMLPLosses() {
         return new Tuple2<>(CandClassifierFields.MLP_LOSSES, "nd");
+    }
+
+    private CAND createCand() {
+        CAND cand = new CAND();
+        setDatasetProperties(classNumber, attributesNumber, datasetName, classEncoder);
+
+        // configured parameters
+        cand.largerPool.setChosenIndex(params.pSize == CandClassifierParams.PoolSize.P10 ? 0 : 1); // |P|
+        cand.numberOfMLPsToTrainOption.setValue(params.mSize); // |M|
+        cand.backPropLossThreshold.setValue(params.backpropagationThreshold); // Math.pow(10, 10);
+        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(500); // 10% of elec
+
+        // output files
+        if (params.votingStatsFile != null)
+            cand.votesDumpFileName.setValue(params.votingStatsFile);
+//        cand.statsDumpFileName.setValue("cand_stats.txt");
+
+        if (params.logAllMlpLosses)
+            logAllMlpLosses = true;
+
+        cand.miniBatchSize.setValue(1); // 1 - incrementally
+        cand.numberOfLayersInEachMLP.setValue(1); // 1
+        cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(1_000); // 1000
+        cand.useOneHotEncode.setValue(true); // t
+        cand.useNormalization.setValue(true); // t
+        cand.deviceTypeOption.setChosenIndex(1); // CPU
+
+        return cand;
     }
 }

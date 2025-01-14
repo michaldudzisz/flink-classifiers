@@ -29,6 +29,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.util.Collector;
 
 public class FlinkProcessFactory {
     public static <T extends ClassifierParamsInterface, C extends BaseClassifier, P extends BaseProcessFunction<C>> void runJobs(String datasetPath, long bootstrapSamplesLimit, ProcessFunctionsFromParametersFactory<T, C, P> processFunctionsFromParametersFactory) throws FileNotFoundException {
@@ -52,7 +54,23 @@ public class FlinkProcessFactory {
 
             P processFunction = processFunctionsFromParametersFactory.createProcessFunction(processFunctionParams, classNumber, attributesNumber, dataset, bootstrapSamplesLimit, encoder);
 
-            DataStream<ClassificationResult> stream = env.fromSource(source, WatermarkStrategy.forMonotonousTimestamps(), "fileSource")
+            // todo zmodyfikowałem bootstrap samples jan 14
+            DataStream<PlainExample> sourceStream = env.fromSource(source, WatermarkStrategy.forMonotonousTimestamps(), "fileSource");
+            DataStream<PlainExample> bootstrapStream = sourceStream
+                    .process(new ProcessFunction<>() {
+                        private int count = 0;
+
+                        @Override
+                        public void processElement(PlainExample value, Context ctx, Collector<PlainExample> out) {
+                            if (count < bootstrapSamplesLimit) {
+                                out.collect(value);
+                                count++;
+                            }
+                        }
+                    });
+
+
+            DataStream<ClassificationResult> stream = bootstrapStream.union(sourceStream)
                     .keyBy(PlainExample::getId)
                     .process(processFunction)
                     .name(processFunctionsFromParametersFactory.getName());

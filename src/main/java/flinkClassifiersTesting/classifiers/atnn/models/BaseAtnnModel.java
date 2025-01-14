@@ -569,13 +569,23 @@ public class BaseAtnnModel {
         Map<String, String> atnnLosses = new HashMap<>();
         atnnLosses.put("active", String.valueOf(activeLoss));
 
+        int normalNodesToLearn = 0;
+        if (activeBranch == 0) {
+            normalNodesToLearn = get_active_node_list().size();
+        } else {
+            normalNodesToLearn =  get_active_node_list().size() + get_active_node_list().get(0).depth + 1; // dodaję 1, bo root ma depth 0
+        }
+
         return new BranchesInfo(
                 branchList.size() + 1, // we add 1 because trunk is not considered as a separate branch in model code
                 activeBranch,
                 get_active_node_list().get(0).depth,
                 get_active_node_list().size(), // to zwróci tylko od miejsca złączenia z trunkiem
                 driftStatus,
-                atnnLosses
+                atnnLosses,
+                0,
+                0,
+                normalNodesToLearn
         );
     }
 

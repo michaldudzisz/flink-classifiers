@@ -30,6 +30,9 @@ public abstract class AtnnProcessFunction extends BaseProcessFunctionClassifyAnd
         return List.of(
                 AtnnClassifierFields.BRANCH_STRUCTURE,
                 AtnnClassifierFields.DRIFT_STATUS,
+                AtnnClassifierFields.CLONED_NODES_TO_TRAIN,
+                AtnnClassifierFields.EMPTY_NODES_TO_TRAIN,
+                AtnnClassifierFields.NORMAL_NODES_TO_TRAIN,
                 BaseClassifierFields.CLASSIFICATION_DURATION,
                 BaseClassifierFields.TRAINING_DURATION
         );

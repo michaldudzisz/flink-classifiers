@@ -102,10 +102,8 @@ class MNIST:
         if drift_end is not None:
             if percentage <= drift_start:
                 angle = 0
-            elif drift_start < percentage <= drift_end:
+            else: # drift_start < percentage <= drift_end:
                 angle = (percentage - drift_start) / (drift_end - drift_start) * 90
-            else:
-                angle = 90
 
         return -angle
 
@@ -169,9 +167,15 @@ if __name__ == "__main__":
     # mnist.generate_atnn_like("./datasets/mnist_grad_atnnowy_prosty.csv", drift_start_line_number=6_000, line_number_to_end_at=12_000)
     # mnist.generate("./datasets/mnist_grad_powolny_2x_szybszy.csv", drift_start=0.10, drift_end=0.45, visualize=False, line_number_to_end_at=29_999)
     # mnist.generate("./datasets/mnist_grad_powolny_4x_szybszy.csv", drift_start=0.10, drift_end=0.24, visualize=False, line_number_to_end_at=15_999)
-    drift_speed = 2 # x1 is for 24k instances
-    dataset_file = f"./datasets/mnist_inc_{drift_speed}x.csv"
-    mnist.generate(dataset_file, drift_start=0.10, drift_end=0.10 + 0.40 / drift_speed, visualize=False, line_number_to_end_at=29_999)
+    drift_speed = 0.5 # x1 is for 20k instances
+    dataset_file = f"./datasets/mnist_inc_20k_{drift_speed}x.csv"
+    mnist.generate(
+        dataset_file,
+        drift_start=5/60,
+        drift_end=(5/60) + (15/60) / drift_speed,
+        visualize=False,
+        line_number_to_end_at=19_999
+    )
     # encode classes
     with open(dataset_file.replace(".csv", ".txt"), "w") as f:
         for i in range(10):

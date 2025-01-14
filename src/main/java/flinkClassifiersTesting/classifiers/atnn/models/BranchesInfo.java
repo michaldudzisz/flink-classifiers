@@ -8,6 +8,9 @@ public class BranchesInfo {
     final int activeBranchGrowingPoint;
     final int activeBranchDepth;
     final Map<String, String> atnnLosses;
+    final int clonedBranchNodesToLearn;
+    final int emptyBranchNodesToLearn;
+    final int normalNodesToLearn;
 
     final String driftStatus;
 
@@ -17,7 +20,10 @@ public class BranchesInfo {
             int activeBranchGrowingPoint,
             int activeBranchDepth,
             String driftStatus,
-            Map<String, String> eatnnLosses
+            Map<String, String> eatnnLosses,
+            int clonedBranchNodesToLearn,
+            int emptyBranchNodesToLearn,
+            int normalNodesToLearn
     ) {
         this.allBranches = allBranches;
         this.activeBranch = activeBranch;
@@ -25,6 +31,9 @@ public class BranchesInfo {
         this.activeBranchDepth = activeBranchDepth;
         this.driftStatus = driftStatus;
         this.atnnLosses = eatnnLosses;
+        this.clonedBranchNodesToLearn = clonedBranchNodesToLearn;
+        this.emptyBranchNodesToLearn = emptyBranchNodesToLearn;
+        this.normalNodesToLearn = normalNodesToLearn;
     }
 
     public String getBranchesInfoString() {
@@ -48,5 +57,17 @@ public class BranchesInfo {
 
     public String getDriftStatusString() {
         return driftStatus;
+    }
+
+    public int getClonedBranchNodesToLearn() {
+        return clonedBranchNodesToLearn;
+    }
+
+    public int getEmptyBranchNodesToLearn() {
+        return emptyBranchNodesToLearn;
+    }
+
+    public int getNormalNodesToLearn() {
+        return normalNodesToLearn;
     }
 }

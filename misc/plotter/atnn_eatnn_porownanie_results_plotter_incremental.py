@@ -385,6 +385,8 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     axes[2].set_xlabel(r"t")
 
     plt.tight_layout()
+    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/atnn_{dataset}.pdf',
+        format='pdf')
     plt.show(block=False)
 
 
@@ -446,9 +448,9 @@ if __name__ == "__main__":
                                             "classificationDuration"]))
 
         plotComparison(dataset, bestClassifierResults, plot_printer_config)
-        dataset_results[dataset] = bestClassifierResults[0].results["accuracy"]
+        dataset_results[dataset] = str(bestClassifierResults[0].accuracy())
 
-    # print(tabulate(dataset_results, headers=["dataset", "accuracy"]))
+    print(dataset_results)
     if not plot_printer_config.is_set():
         plt.show()
 
