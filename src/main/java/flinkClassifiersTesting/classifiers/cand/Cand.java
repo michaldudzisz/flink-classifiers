@@ -127,7 +127,8 @@ public class Cand extends BaseClassifierClassifyAndTrain {
     private Tuple2<String, Object> getBestMLPParams() {
         MLP[] nns = getAllMLPs();
         MLP bestMLP = findCurrentlyBestMLP(nns);
-        return new Tuple2<>(BEST_MLP_NAME, bestMLP.modelName);
+        String bestMLPName = bestMLP.modelName.replace(',', '.');
+        return new Tuple2<>(BEST_MLP_NAME, bestMLPName);
     }
 
     private MLP findCurrentlyBestMLP(MLP[] nns) {
@@ -170,6 +171,9 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         cand.useOneHotEncode.setValue(true); // t
         cand.useNormalization.setValue(true); // t
         cand.deviceTypeOption.setChosenIndex(1); // CPU
+
+        System.out.println("tworze canda o P=" + cand.largerPool.getChosenLabel());
+        System.out.println("tworze canda o M=" + cand.numberOfMLPsToTrainOption.getValue());
 
         return cand;
     }

@@ -147,27 +147,23 @@ def readAllResults(classifierPath: str):
     return allResults
 
 
-def getClassifierResults(classifierPath: str):
-    classifierType = os.path.basename(os.path.normpath(classifierPath))
+def getClassifierResults(classifierParamsPath: str):
 
+    with open(f"{classifierParamsPath}/result.json", "r") as resultFile:
+        resultJson = json.load(resultFile)
+        headers = resultJson["dataHeader"]
 
-    for classifierParamsRaw in os.listdir(classifierPath): # wchodze na poziom tych P10_M2
-        classifierParamsPath = f"{classifierPath}/{classifierParamsRaw}"
+        chronologicalDataFilePaths = listOfExperimentFilePathsForParams(classifierParamsPath)
+        results = readData(chronologicalDataFilePaths, headers)
+        print("lista plików:")
+        pprint.pprint(chronologicalDataFilePaths)
 
-        classifierParams = extractParams(classifierParamsRaw)
+        trainingDuration = round(np.sum(results["trainingDuration"]) / 1e9, 2)
+        classificationDuration = round(np.sum(results["classificationDuration"]) / 1e9, 2)
 
-        with open(f"{classifierParamsPath}/result.json", "r") as resultFile:
-            resultJson = json.load(resultFile)
-            headers = resultJson["dataHeader"]
-
-            chronologicalDataFilePaths = listOfExperimentFilePathsForParams(classifierParamsPath)
-            results = readData(chronologicalDataFilePaths, headers)
-
-            trainingDuration = round(np.sum(results["trainingDuration"]) / 1e9, 2)
-            classificationDuration = round(np.sum(results["classificationDuration"]) / 1e9, 2)
-
-            acc = results["accuracy"][-1]
-            T_overall = trainingDuration + classificationDuration
+        acc = results["accuracy"][-1]
+        # T_overall = trainingDuration + classificationDuration
+        T_overall = (results["timestamp"][-1] - results["timestamp"][0])/1e9
 
     return acc, T_overall
 
@@ -187,20 +183,25 @@ if __name__ == "__main__":
     dataset_results = {}
     for dataset in os.listdir(resultsPath):
         datasetPath = f"{resultsPath}/{dataset}"
+        print(f"dataset: {dataset}")
 
         bestClassifierResults = []
 
         allResults = []
 
         dataset_results[dataset] = {}
-        for classifierType in os.listdir(datasetPath):
+        for classifierType in os.listdir(datasetPath): # cand
             classifierPath = f"{datasetPath}/{classifierType}"
 
-            accuracy, T_overall = getClassifierResults(classifierPath)
+            for classifierParams in os.listdir(classifierPath): # Psize10_Msize10
+                classifierParamsPath = f"{classifierPath}/{classifierParams}"
+                print(f"params: {classifierParams}")
 
-            dataset_results[dataset][classifierType] = {}
-            dataset_results[dataset][classifierType]["acc"] = round(float(accuracy), 2)
-            dataset_results[dataset][classifierType]["time"] = round(float(T_overall), 2)
+                accuracy, T_overall = getClassifierResults(classifierParamsPath)
+
+                dataset_results[dataset][classifierParams] = {}
+                dataset_results[dataset][classifierParams]["acc"] = round(float(accuracy), 2)
+                dataset_results[dataset][classifierParams]["time"] = round(float(T_overall), 2)
 
 
     pprint.pprint(dataset_results)

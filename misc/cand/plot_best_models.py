@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from find_result_filenames import find_results_metadata
+import pprint
 
 
 def get_neurons_from_name(name: str) -> int:
@@ -14,7 +15,8 @@ def get_optimizer_from_name(name: str) -> str:
 
 def get_lr_from_name(name: str) -> float:
     # name: for example L1_N8_SGD_0.50000
-    return float(name.split(sep="_")[3])
+    lr = float(name.split(sep="_")[3])
+    return lr
 
 def get_best_classifiers(data):
     # data['layers'] = data.apply(lambda row: get_layers_from_int_value(row['modelName']), axis=1)

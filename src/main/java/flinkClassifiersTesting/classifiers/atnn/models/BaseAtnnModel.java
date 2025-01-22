@@ -469,13 +469,14 @@ public class BaseAtnnModel {
 //            System.out.println("lossStatisticsList.get(" + branch + ").get(\"prev_mean\"): " + lossStatisticsList.get(branch).get("prev_mean"));
         }
 
+        if (!driftAlert) {
+            driftStatus = DRIFT_STATUS_NO_DRIFT;
+        }
+
         if (lossStatisticsList.containsKey(activeBranch) && lossStatisticsList.get(activeBranch).containsKey("mean")) {
             driftAlertDetection();
         }
 
-        if (!driftAlert) {
-            driftStatus = DRIFT_STATUS_NO_DRIFT;
-        }
     }
 
     protected void driftAlertDetection() {

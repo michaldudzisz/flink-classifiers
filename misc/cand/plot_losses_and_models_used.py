@@ -51,6 +51,7 @@ def make_charts(best_classifiers, losses):
 
     axs[1].set_title(f'Wykres dla kolumny')
     axs[1].set_xlabel('Indeks')
+    axs[1].set_ylim((0, 8))
     # axs[1].set_ylabel('Wartość')
     axs[1].legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, fontsize=6)
 
@@ -82,7 +83,11 @@ if __name__ == "__main__":
 
     metadata = find_results_metadata(experiment_id)
     for experiment_metadata in metadata:
+        print("loading csv data...")
         data = load_csv_files(experiment_metadata.files, experiment_metadata.file_headers)
+        print("collecting losses...")
         losses = all_classifiers_losses(data)
+        print("choosing best classifier...")
         best_classifiers = get_best_classifiers(data)
+        print("drawing charts...")
         make_charts(best_classifiers, losses)

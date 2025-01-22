@@ -17,7 +17,7 @@ class MNIST:
     _ATTRIBUTES = 28 * 28
     _DATASET_LEN = 60_000
 
-    _DRIFT_PERIODS = [range(5_000, 1_000), range(15_000, 20_000), range(25_000, 30_000)]
+    _DRIFT_PERIODS = [range(5_000, 10_000), range(15_000, 20_000), range(25_000, 30_000)]
 
     def __init__(self, dataset_path):
         self.dataset_path = dataset_path
