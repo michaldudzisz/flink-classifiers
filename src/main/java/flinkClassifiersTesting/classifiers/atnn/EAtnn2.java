@@ -32,6 +32,8 @@ public class EAtnn2 extends BaseClassifierClassifyAndTrain {
     int exampleNumber = 0;
     int bootstrapExampleNumber = 0;
 
+    double gamma = 1.0;
+
     EnhancedAtnnModel2 model;
     EnhancedAtnnModel2 bootstrapModel;
 
@@ -43,6 +45,7 @@ public class EAtnn2 extends BaseClassifierClassifyAndTrain {
         hNeuronNum = params.hiddenLayerSize;
         initialLearningRate = params.learningRate;
         lambda = params.lambda;
+        gamma = params.gamma;
     }
 
 
@@ -51,7 +54,7 @@ public class EAtnn2 extends BaseClassifierClassifyAndTrain {
         // przyjmuje i zwraca performance
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
+            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda, gamma);
             model.init_node_weight();
         }
         RealVector feature = createRealVector(example.getAttributes());
@@ -84,11 +87,13 @@ public class EAtnn2 extends BaseClassifierClassifyAndTrain {
     protected Tuple2<Integer, ArrayList<Tuple2<String, Object>>> classifyImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
+            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda, gamma);
             model.init_node_weight();
         }
         exampleNumber += 1;
-        System.out.println("i: " + exampleNumber);
+        if (exampleNumber % 1000 == 0) {
+            System.out.println("i: " + exampleNumber);
+        }
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
         double[] result = model.predict(feature).toArray();
@@ -106,13 +111,13 @@ public class EAtnn2 extends BaseClassifierClassifyAndTrain {
     public void bootstrapTrainImplementation(Example example) {
         if (model == null) {
             featureLen = example.getAttributes().length;
-            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
+            model = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda, gamma);
             model.init_node_weight();
         }
         if (bootstrapModel == null) {
             featureLen = example.getAttributes().length;
-            bootstrapModel = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
-            model.init_node_weight();
+            bootstrapModel = new EnhancedAtnnModel2(featureLen, hNeuronNum, classNum, initialLearningRate, lambda, gamma);
+            bootstrapModel.init_node_weight();
         }
         bootstrapExampleNumber += 1;
         System.out.println("bi: " + bootstrapExampleNumber);

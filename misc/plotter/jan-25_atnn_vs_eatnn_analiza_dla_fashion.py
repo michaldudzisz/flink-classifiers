@@ -16,7 +16,6 @@ import argparse
 import matplotlib.gridspec as gridspec
 import matplotlib
 
-
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
@@ -196,16 +195,16 @@ def readAllResults(classifierPath: str):
     return allResults
 
 
-def getBestClassifier(classifierPath: str):
+def getBestClassifiers(classifierPath: str):
     classifierType = os.path.basename(os.path.normpath(classifierPath))
 
-    bestAccuracy = -1.0
     bestParams = {}
     bestResults = {}
     bestHeaders = []
     bestJobId = ""
 
     allResults = []
+    allClassifierResults = []
 
     for classifierParamsRaw in os.listdir(classifierPath): # wchodze na poziom tych P10_M2
         classifierParamsPath = f"{classifierPath}/{classifierParamsRaw}"
@@ -220,12 +219,10 @@ def getBestClassifier(classifierPath: str):
             results = readData(chronologicalDataFilePaths, headers)
 
             currentAccuracy = results["accuracy"][-1]
-            if currentAccuracy > bestAccuracy:
-                bestAccuracy = currentAccuracy
-                bestParams = classifierParams
-                bestResults = results
-                bestHeaders = headers
-                bestJobId = resultJson["jobId"]
+            bestParams = classifierParams
+            bestResults = results
+            bestHeaders = headers
+            bestJobId = resultJson["jobId"]
 
 
             trainingDuration = round(np.sum(results["trainingDuration"]) / 1e9, 2)
@@ -235,7 +232,9 @@ def getBestClassifier(classifierPath: str):
                                trainingDuration + classificationDuration, trainingDuration,
                                classificationDuration))
 
-    return ClassifierResults(bestParams, classifierType, bestResults, bestHeaders, bestJobId), allResults
+            allClassifierResults.append(ClassifierResults(bestParams, classifierType, bestResults, bestHeaders, bestJobId))
+
+    return allClassifierResults, allResults
 
 
 def plotWindowed(dataset: str, classifierResults: list[ClassifierResults], performanceType: str,
@@ -264,6 +263,9 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
          showDetections: bool = True, prefix: str = None, overridenTitle: str = None, overridenYLabel: str = None,
          overridenUnit: str = None, printSmall: bool = False,
          sampleNumberMapper: Callable[[np.ndarray], np.ndarray] = lambda x: x):
+    # if (dataset != "incremental_drift_synth_attr2_speed0.2_len20000" and dataset != "incremental_drift_synth_attr2_speed0.5_len20000"):
+    #     return
+
     if plot_printer_config.is_set() and printSmall is False:
         plt.figure(dpi=1200)
     else:
@@ -284,21 +286,30 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     speed_value = 0
     for classifier in classifierResults:
         y = mapper(classifier.results[performanceType])
-
+        print(f"gamma: " + str(classifier.params["gamma"]))
         if mode is None or mode == "sample":
             sampleNumbers = sampleNumberMapper(np.cumsum(np.ones_like(y)))
-            if classifier.classifierType == "eatnn2":
-                curve = axes.plot(sampleNumbers, y, label="dokładność SEATNN")
+            print(f"classifier.classifierType == {classifier.classifierType} and classifier.params[\"gamma\"] == {classifier.params["gamma"]}")
+            if classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 0.1:
+                curve = axes.plot(sampleNumbers, y, label="dokładność SEATNN g=0.1")
+            elif classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 0.5:
+                curve = axes.plot(sampleNumbers, y, label="dokładność SEATNN g=0.5")
+            elif classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 1.0:
+                curve = axes.plot(sampleNumbers, y, label="dokładność SEATNN g=1")
             else:
+                print("bede rysowal ATNN")
                 curve = axes.plot(sampleNumbers, y, label="dokładność ATNN")
+            print("wybralem co mialem")
 
             match = re.search(r'([0-9]*\.?[0-9]+)x', dataset)
             if match:
                 speed_value = float(match.group(1))
-                print(f'Liczba przed "x": {speed_value}')
+                # print(f'Liczba przed "x": {speed_value}')
             else:
-                print('Nie znaleziono liczby po "speed".')
-            axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek, " + dataset + ", $x=" +  str(speed_value) + "$")
+                # print('Nie znaleziono liczby po "speed".')
+                pass
+            # axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek")
+            axes.set_title(f"{dataset}")
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}
@@ -322,9 +333,9 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 if driftStatus == "new_detected" and classifier.classifierType == "atnn":
                     if not drift_status_already_added.get("new_detected", False):
                         drift_status_already_added["new_detected"] = True
-                        axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5, label='ATNN: nowe pojęcie')
+                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5, label='ATNN: dodano pustą gałąź')
                     else:
-                        axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5)
+                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5)
                 if driftStatus == "new_detected_cloned":
                     if not drift_status_already_added.get("new_detected_cloned", False):
                         axes.axvline(x=idx, color=color_green, linestyle=':', linewidth=1.5, label='SEATNN: sklonowano aktywną gałąź')
@@ -337,24 +348,24 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                         drift_status_already_added["new_detected_empty"] = True
                     else:
                         axes.axvline(x=idx, color=color_red, linestyle=':', linewidth=1.5)
-                if driftStatus == "current_evolving":
-                    if not drift_status_already_added.get("current_evolving", False):
-                        axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5, label='SEATNN: pozwolono ewoluować aktywnej gałęzi')
-                        drift_status_already_added["current_evolving"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5)
-                if driftStatus == "recurring" and classifier.classifierType == "eatnn":
-                    if not drift_status_already_added.get("recurring", False):
-                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5, label='SEATNN: powracające pojęcie')
-                        drift_status_already_added["recurring"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5)
-                if driftStatus == "recurring" and classifier.classifierType == "atnn":
-                    if not drift_status_already_added.get("recurring", False):
-                        axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5, label='ATNN: powracające pojęcie')
-                        drift_status_already_added["recurring"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5)
+                # if driftStatus == "current_evolving":
+                #     if not drift_status_already_added.get("current_evolving", False):
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5, label='SEATNN: pozwolono ewoluować aktywnej gałęzi')
+                #         drift_status_already_added["current_evolving"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "eatnn":
+                    # if not drift_status_already_added.get("recurring", False):
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5, label='SEATNN: powracające pojęcie')
+                    #     drift_status_already_added["recurring"] = True
+                    # else:
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "atnn":
+                #     if not drift_status_already_added.get("recurring", False):
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5, label='ATNN: powracające pojęcie')
+                #         drift_status_already_added["recurring"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5)
 
     #
     #         # rysuj liczbe warstw na drugim wykresie
@@ -420,7 +431,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     #
     axes.set_xlabel(r"t")
     axes.legend()
-    # axes.set_ylim([70, 93])
+    axes.set_ylim(bottom=65)
     # axes[1].set_xlabel(r"t")
     # axes[2].set_xlabel(r"t")
 
@@ -475,8 +486,8 @@ if __name__ == "__main__":
         for classifierType in os.listdir(datasetPath):
             classifierPath = f"{datasetPath}/{classifierType}"
 
-            bestClassifier, tmpResults = getBestClassifier(classifierPath)
-            bestClassifierResults.append(bestClassifier)
+            allClassifierResults, tmpResults = getBestClassifiers(classifierPath)
+            bestClassifierResults += allClassifierResults
             allResults.extend(tmpResults)
 
         bestClassifierResults = sorted(bestClassifierResults, key=lambda classifier: classifier.accuracy(),
@@ -487,6 +498,7 @@ if __name__ == "__main__":
         print(tabulate(allResults, headers=["type", "params", "accuracy", "duration", "trainingDuration",
                                             "classificationDuration"]))
 
+        print(bestClassifierResults)
         plotComparison(dataset, bestClassifierResults, plot_printer_config)
         dataset_results[dataset] = {}
         dataset_results[dataset][bestClassifierResults[0].classifierType] = str(bestClassifierResults[0].accuracy())

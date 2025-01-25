@@ -81,7 +81,9 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
             model.init_node_weight();
         }
         exampleNumber += 1;
-        System.out.println("i: " + exampleNumber);
+        if (exampleNumber % 1000 == 0) {
+            System.out.println("i: " + exampleNumber);
+        }
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
         double[] result = model.predict(feature).toArray();
@@ -113,13 +115,13 @@ public class Atnn extends BaseClassifierClassifyAndTrain {
         if (bootstrapModel == null) {
             featureLen = example.getAttributes().length;
             bootstrapModel = new BaseAtnnModel(featureLen, hNeuronNum, classNum, initialLearningRate, lambda);
-            model.init_node_weight();
+            bootstrapModel.init_node_weight();
         }
 
         bootstrapExampleNumber += 1;
         System.out.println("bi: " + bootstrapExampleNumber);
         RealVector feature = createRealVector(example.getAttributes());
         RealVector label = oneHotEncodeExample(example);
-        model.train_model(feature, label);
+        bootstrapModel.train_model(feature, label);
     }
 }

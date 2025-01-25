@@ -1,23 +1,29 @@
 package flinkClassifiersTesting.classifiers.atnn.models;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.commons.math3.linear.RealVector;
 
 public class EnhancedAtnnModel2 extends BaseAtnnModel {
 
     BranchesToTrainDuringDriftAlert branchesToTrainDuringDriftAlert = new BranchesToTrainDuringDriftAlert();
 
-    public EnhancedAtnnModel2(int featureNum, int hNeuronNum, int cNeuronNum, double initialLearningRate, int lambda) {
+    private final double gamma;
+
+    public EnhancedAtnnModel2(int featureNum, int hNeuronNum, int cNeuronNum, double initialLearningRate, int lambda, double gamma) {
         super(featureNum, hNeuronNum, cNeuronNum, initialLearningRate, lambda);
+        this.gamma = gamma;
     }
 
     @Override
     protected boolean should_back_propagate_node(Node node) {
         return (node.branchType == 0 || node.branchType == activeBranch) // normal path
                 || (node.hasBeenForwarded && (node.branchType == branchesToTrainDuringDriftAlert.empty || node.branchType == branchesToTrainDuringDriftAlert.cloned));
-    }
+    } // todo może hasBeenForwarded coś mieszać?
 
     @Override
     protected boolean should_forward_propagate_node(Node node) {
@@ -26,27 +32,12 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
                 || node.branchType == 0;
     }
 
-    protected void choose_among_drift_branches() {
-        int emptyBranch = branchesToTrainDuringDriftAlert.empty;
-        double emptyBranchLoss = lossStatisticsList.get(emptyBranch).get("prev_mean");
-
-        int clonedBranch = branchesToTrainDuringDriftAlert.cloned;
-        double clonedBranchLoss = lossStatisticsList.get(clonedBranch).get("prev_mean");
-
-        if (emptyBranchLoss < clonedBranchLoss) {
-            activeBranch = emptyBranch;
-        } else {
-            activeBranch = clonedBranch;
-        }
-    }
-
     protected void removeBranch(int branch) {
         branchList.remove((Integer) branch);
         del_branch(model, branch);
         lossStatisticsList.remove(branch);
         lossList.remove(branch);
         nodeList.remove(branch);
-        System.out.println("Removed branch: " + branch);
     }
 
     protected void clean_drift_alert_branches() {
@@ -85,8 +76,57 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
     @Override
     protected boolean shouldSkipUpdatingLossStatistics(List<Double> losslist) {
         return losslist.size() < splitLen;
+    } // todo czemu tak? w bazowej jest lossLen
+
+    @Override
+    protected void update_weights(RealVector label) {
+        List<Node> activeNodeList = get_active_node_list();
+        update_weight_by_loss(activeNodeList, label);
+
+        if (driftAlert && branchesToTrainDuringDriftAlert.cloned != -1) {
+            List<Node> clonedNodeList = nodeList.get(branchesToTrainDuringDriftAlert.cloned);
+            boolean allNodesForwarded = clonedNodeList.stream().allMatch(node -> node.hasBeenForwarded);
+            if (allNodesForwarded) {
+                update_weight_by_loss(clonedNodeList, label);
+            }
+        }
+
+        if (driftAlert && branchesToTrainDuringDriftAlert.empty != -1) {
+            List<Node> emptyNodeList = nodeList.get(branchesToTrainDuringDriftAlert.empty);
+            boolean allNodesForwarded = emptyNodeList.stream().allMatch(node -> node.hasBeenForwarded);
+            if (allNodesForwarded) {
+                update_weight_by_loss(emptyNodeList, label);
+            }
+        }
     }
 
+    @Override
+    protected void model_grow_and_prune() {
+        List<Node> activeNodeList = get_active_node_list();
+        Node maxWeightNode = activeNodeList.stream().max(Comparator.comparingDouble(n -> n.weight)).orElse(null); // todo czy tu sie nie wywali
+        assert maxWeightNode != null;
+        if (maxWeightNode.childList.isEmpty()) {
+            add_empty_child_node(maxWeightNode, maxWeightNode.branchType, 1.0 / (activeNodeList.size() + 1));
+        }
+
+        if (driftAlert && branchesToTrainDuringDriftAlert.cloned != -1) {
+            List<Node> clonedNodeList = nodeList.get(branchesToTrainDuringDriftAlert.cloned);
+            Node maxWeightNodeCloned = clonedNodeList.stream().max(Comparator.comparingDouble(n -> n.weight)).orElse(null);
+            assert maxWeightNodeCloned != null;
+            if (maxWeightNodeCloned.childList.isEmpty()) {
+                add_empty_child_node(maxWeightNodeCloned, maxWeightNodeCloned.branchType, 1.0 / (clonedNodeList.size() + 1));
+            }
+        }
+
+        if (driftAlert && branchesToTrainDuringDriftAlert.empty != -1) {
+            List<Node> emptyNodeList = nodeList.get(branchesToTrainDuringDriftAlert.empty);
+            Node maxWeightNodeEmpty = emptyNodeList.stream().max(Comparator.comparingDouble(n -> n.weight)).orElse(null);
+            assert maxWeightNodeEmpty != null;
+            if (maxWeightNodeEmpty.childList.isEmpty()) {
+                add_empty_child_node(maxWeightNodeEmpty, maxWeightNodeEmpty.branchType, 1.0 / (emptyNodeList.size() + 1));
+            }
+        }
+    }
 
     @Override
     protected void driftAlertDetection() {
@@ -138,7 +178,7 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
             }
             update_fisherMatrix();
             lastDriftTime = trainTimes;
-//          reset_weight_in_active_branch(); // todo A CO Z TYM?
+//          reset_weight_in_active_branch(); // A CO Z TYM? nie trzeba tego
 
             clean_drift_alert_branches();
             driftAlert = false;
@@ -230,7 +270,7 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
         nodeList.put(branchNum, new ArrayList<>());
         for (Node node : nodesToCopy) {
 //            System.out.println("Going to clone: branchType: " + node.branchType + ", depth: " + node.depth);
-            Node newNode = node.copy(upperNode, branchNum);
+            Node newNode = node.copy(upperNode, branchNum, gamma);
             upperNode.childList.add(newNode);
             nodeList.get(branchNum).add(newNode);
             upperNode = newNode;
@@ -261,7 +301,7 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
         nodeList.put(branchNum, new ArrayList<>());
         for (Node node : nodesToCopy) {
 //            System.out.println("Going to clone: branchType: " + node.branchType + ", depth: " + node.depth);
-            Node newNode = node.copy(upperNode, branchNum);
+            Node newNode = node.copy(upperNode, branchNum, gamma);
             upperNode.childList.add(newNode);
             nodeList.get(branchNum).add(newNode);
             upperNode = newNode;

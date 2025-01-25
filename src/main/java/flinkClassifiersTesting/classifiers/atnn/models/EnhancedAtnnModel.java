@@ -197,7 +197,7 @@ public class EnhancedAtnnModel extends BaseAtnnModel {
         nodeList.put(branchNum, new ArrayList<>());
         for (Node node : nodesToCopy) {
 //            System.out.println("Going to clone: branchType: " + node.branchType + ", depth: " + node.depth);
-            Node newNode = node.copy(upperNode, branchNum);
+            Node newNode = node.copy(upperNode, branchNum, 1.0);
             upperNode.childList.add(newNode);
             nodeList.get(branchNum).add(newNode);
             upperNode = newNode;

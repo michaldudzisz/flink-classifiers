@@ -598,13 +598,17 @@ public class BaseAtnnModel {
         update_loss_statistics();
         back_propagation(model, label);
         update_model(model);
-        List<Node> activeNodeList = get_active_node_list();
-        update_weight_by_loss(activeNodeList, label);
+        update_weights(label);
         trainTimes = trainTimes + 1;
         model_grow_and_prune();
         if (alertNum >= splitLen)
             conceptDetection();
         return;
+    }
+
+    protected void update_weights(RealVector label) {
+        List<Node> activeNodeList = get_active_node_list();
+        update_weight_by_loss(activeNodeList, label);
     }
 
 

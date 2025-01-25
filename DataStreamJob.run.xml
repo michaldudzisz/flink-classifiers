@@ -5,6 +5,7 @@
     <envs>
       <env name="FLINK_BIN_PATH" value="$USER_HOME$/bin/flink-1.19.1/bin" />
       <env name="RESULTS_DIRECTORY" value="$PROJECT_DIR$/results" />
+      <env name="EXPERIMENT_ID" value="jan-25-gamma-dla-fashion" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="flinkClassifiersTesting.DataStreamJob" />
     <module name="flinkClassifierTestingEnv" />

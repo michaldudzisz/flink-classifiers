@@ -123,12 +123,12 @@ public class Node {
         return createRealVector(data);
     }
 
-    public Node copy(Node parent, int branchType) {
+    public Node copy(Node parent, int branchType, double gamma) {
         Node copied = new Node();
         copied.branchType = branchType;
         copied.isShare = false;
         copied.initialLearnRate = this.initialLearnRate;
-        copied.learnRate = this.initialLearnRate; // powrót do dużego lr
+        copied.learnRate = gamma * this.initialLearnRate; // powrót do dużego lr
         copied.minLR = this.minLR;
         copied.hNeuronNum = this.hNeuronNum;
         copied.cNeuronNum = this.cNeuronNum;

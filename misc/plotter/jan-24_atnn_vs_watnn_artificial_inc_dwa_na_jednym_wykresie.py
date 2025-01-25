@@ -264,6 +264,9 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
          showDetections: bool = True, prefix: str = None, overridenTitle: str = None, overridenYLabel: str = None,
          overridenUnit: str = None, printSmall: bool = False,
          sampleNumberMapper: Callable[[np.ndarray], np.ndarray] = lambda x: x):
+    # if (dataset != "incremental_drift_synth_attr2_speed0.2_len20000" and dataset != "incremental_drift_synth_attr2_speed0.5_len20000"):
+    #     return
+
     if plot_printer_config.is_set() and printSmall is False:
         plt.figure(dpi=1200)
     else:
@@ -298,7 +301,8 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 print(f'Liczba przed "x": {speed_value}')
             else:
                 print('Nie znaleziono liczby po "speed".')
-            axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek, " + dataset + ", $x=" +  str(speed_value) + "$")
+            # axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek")
+            axes.set_title(f"{dataset}")
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}
@@ -322,9 +326,9 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 if driftStatus == "new_detected" and classifier.classifierType == "atnn":
                     if not drift_status_already_added.get("new_detected", False):
                         drift_status_already_added["new_detected"] = True
-                        axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5, label='ATNN: nowe pojęcie')
+                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5, label='ATNN: dodano pustą gałąź')
                     else:
-                        axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5)
+                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5)
                 if driftStatus == "new_detected_cloned":
                     if not drift_status_already_added.get("new_detected_cloned", False):
                         axes.axvline(x=idx, color=color_green, linestyle=':', linewidth=1.5, label='SEATNN: sklonowano aktywną gałąź')
@@ -337,24 +341,24 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                         drift_status_already_added["new_detected_empty"] = True
                     else:
                         axes.axvline(x=idx, color=color_red, linestyle=':', linewidth=1.5)
-                if driftStatus == "current_evolving":
-                    if not drift_status_already_added.get("current_evolving", False):
-                        axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5, label='SEATNN: pozwolono ewoluować aktywnej gałęzi')
-                        drift_status_already_added["current_evolving"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5)
-                if driftStatus == "recurring" and classifier.classifierType == "eatnn":
-                    if not drift_status_already_added.get("recurring", False):
-                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5, label='SEATNN: powracające pojęcie')
-                        drift_status_already_added["recurring"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5)
-                if driftStatus == "recurring" and classifier.classifierType == "atnn":
-                    if not drift_status_already_added.get("recurring", False):
-                        axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5, label='ATNN: powracające pojęcie')
-                        drift_status_already_added["recurring"] = True
-                    else:
-                        axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5)
+                # if driftStatus == "current_evolving":
+                #     if not drift_status_already_added.get("current_evolving", False):
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5, label='SEATNN: pozwolono ewoluować aktywnej gałęzi')
+                #         drift_status_already_added["current_evolving"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "eatnn":
+                    # if not drift_status_already_added.get("recurring", False):
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5, label='SEATNN: powracające pojęcie')
+                    #     drift_status_already_added["recurring"] = True
+                    # else:
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "atnn":
+                #     if not drift_status_already_added.get("recurring", False):
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5, label='ATNN: powracające pojęcie')
+                #         drift_status_already_added["recurring"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5)
 
     #
     #         # rysuj liczbe warstw na drugim wykresie

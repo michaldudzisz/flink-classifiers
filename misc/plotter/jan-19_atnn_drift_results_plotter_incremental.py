@@ -93,10 +93,11 @@ def readData(paths: list[str], headers: list[str]):
                 for key in collectedHeaders:
                     if (key == "trainingDuration"):
                         if (not row[key].isdigit()):
-                            print(row[key])
-                            print(row[key].isdigit())
-                            print("koncze sie, bo mam czas, ktory nie jest liczba")
-                            quit()
+                            row[key] = "1000"
+                            # print(row[key])
+                            # print(row[key].isdigit())
+                            # print("koncze sie, bo mam czas, ktory nie jest liczba")
+                            # quit()
                     if row[key].isdigit():
                         result[key].append(int(row[key]))
                     else:
