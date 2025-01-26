@@ -293,7 +293,7 @@ public class EnhancedAtnnModel2 extends BaseAtnnModel {
         }
 
         if (nodesToCopy.isEmpty()) { // jeśli jakimś cudem za parent wybrało ostatni node w trunku
-            System.out.println("add_cloned_from_trunk_branch: Jakimś cudem wybrano za parent ostatni node w trunku");
+//            System.out.println("add_cloned_from_trunk_branch: Jakimś cudem wybrano za parent ostatni node w trunku");
             add_empty_child_node(upperNode, branchNum, 1.0);
             return;
         }
