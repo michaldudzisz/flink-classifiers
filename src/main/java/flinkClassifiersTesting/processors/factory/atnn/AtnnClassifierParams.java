@@ -24,4 +24,15 @@ public class AtnnClassifierParams implements ClassifierParamsInterface {
     public String directoryName() {
         return "lr" + learningRate + "_hls" + hiddenLayerSize + "_lambda" + lambda + "_gamma" + gamma + "_iter" + iter;
     }
+
+    @Override
+    public String toString() {
+        return "AtnnClassifierParams{" +
+                "learningRate=" + learningRate +
+                ", hiddenLayerSize=" + hiddenLayerSize +
+                ", lambda=" + lambda +
+                ", gamma=" + gamma +
+                ", iter=" + iter +
+                '}';
+    }
 }

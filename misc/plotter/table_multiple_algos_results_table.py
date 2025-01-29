@@ -18,7 +18,7 @@ from tabulate import tabulate
 
 import pprint
 
-from latex_table_eatnn_gammas import gamma_accuracy_comparison_table
+from latex_table_atnn_vs_eatnn_accuracies import accuracy_comparison
 from latex_table_atnn_vs_eatnn_times import times_comparison
 
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
@@ -229,12 +229,16 @@ if __name__ == "__main__":
     for dataset, methods in dataset_results.items():
         for method, params in methods.items():
             for param_set, metrics in params.items():
-                param_set = param_set[:-6] # usuwam _iter1, _iter2, itd.
                 row = {
                     'Dataset': dataset,
                     'Method': method,
                     'Params': param_set,
                     'Accuracy': metrics['acc'],
+                    'Time Overall': metrics['time_overall'],
+                    'Time Train': metrics['time_train'],
+                    'Warn samples': metrics['d_warn'],
+                    'Warn nodes': metrics['n_warn_nodes'],
+                    'Overall nodes': metrics['n_nodes']
                 }
                 rows.append(row)
 
@@ -243,19 +247,19 @@ if __name__ == "__main__":
     # Reformatting and displaying the DataFrame using a standard Python print statement for simplicity
     print(tabulate(df, headers='keys', tablefmt='grid'))
 
-    summary = df.groupby(["Dataset", "Method", "Params"]).mean(numeric_only=True).reset_index()
+    summary = df.groupby(["Dataset", "Method"]).mean(numeric_only=True).reset_index()
     print(tabulate(summary, headers='keys', tablefmt='grid'))
 
-    print_latex_table_acc = True
+    print_latex_table_acc = False
     if print_latex_table_acc:
-        acc_latex_table = gamma_accuracy_comparison_table(summary)
-        with open("misc/plotter/gamma_accuracy_comparison_table.tex", "w") as f:
+        acc_latex_table = accuracy_comparison(summary)
+        with open("misc/plotter/accuracy_comparison.tex", "w") as f:
             f.write(acc_latex_table)
-    #
-    # print_latex_table_times = False
-    # if print_latex_table_times:
-    #     acc_latex_table = times_comparison(summary)
-    #     with open("misc/plotter/times_comparison.tex", "w") as f:
-    #         f.write(acc_latex_table)
-    #
-    #
+
+    print_latex_table_times = True
+    if print_latex_table_times:
+        acc_latex_table = times_comparison(summary)
+        with open("misc/plotter/times_comparison.tex", "w") as f:
+            f.write(acc_latex_table)
+
+

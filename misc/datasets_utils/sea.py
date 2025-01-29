@@ -108,7 +108,7 @@ def save_to_flink_csv(data, path_to_file):
 
     with open(path_to_file, 'w') as file:
         file.write('x1,x2,x3,class\n')
-        for index, row in data.iterrows():
+        for index, row in df_normalized.iterrows():
             file.write(f"{row['x1']}#{row['x2']}#{row['x3']},{int(row['class'])}\n")
 
 
@@ -117,9 +117,9 @@ if __name__ == "__main__":
 
     gradual_dataset = sea.generate_gradual()
     # save_to_normal_csv(gradual_dataset, './datasets/sea_grad_norm.csv')
-    save_to_flink_csv(gradual_dataset, './datasets/sea_inc.csv')
+    save_to_flink_csv(gradual_dataset, './datasets/sea_inc_norm.csv')
 
     abrupt_dataset = sea.generate_abrupt()
     # save_to_normal_csv(abrupt_dataset, './datasets/sea_abr_norm.csv')
-    save_to_flink_csv(abrupt_dataset, './datasets/sea_abr.csv')
+    save_to_flink_csv(abrupt_dataset, './datasets/sea_abr_norm.csv')
 

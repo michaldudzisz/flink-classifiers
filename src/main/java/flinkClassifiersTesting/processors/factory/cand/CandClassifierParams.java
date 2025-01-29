@@ -11,6 +11,7 @@ public class CandClassifierParams implements ClassifierParamsInterface {
     public double backpropagationThreshold = 0;
     public String votingStatsFile = null;
     public boolean logAllMlpLosses = false;
+    int iter = 0;
 
     public CandClassifierParams() {
     }
@@ -46,16 +47,18 @@ public class CandClassifierParams implements ClassifierParamsInterface {
     public CandClassifierParams(
             PoolSize pSize,
             int mSize,
-            double backpropagationThreshold
+            double backpropagationThreshold,
+            int iter
     ) {
         this.mSize = mSize;
         this.pSize = pSize;
         this.backpropagationThreshold = backpropagationThreshold;
+        this.iter = iter;
     }
 
     @Override
     public String directoryName() {
-        return "Psize" + poolSizeToString(pSize) + "_Msize" + mSize;
+        return "Psize" + poolSizeToString(pSize) + "_Msize" + mSize + "_Bpth" + backpropagationThreshold + "_iter" + iter;
     }
 
     private static String poolSizeToString(PoolSize pSize) {
@@ -76,6 +79,8 @@ public class CandClassifierParams implements ClassifierParamsInterface {
         return "CandClassifierParams{" +
                 "mSize=" + mSize +
                 ", pSize=" + pSize +
+                ", backpropagationThreshold=" + backpropagationThreshold +
+                ", iter=" + iter +
                 '}';
     }
 }

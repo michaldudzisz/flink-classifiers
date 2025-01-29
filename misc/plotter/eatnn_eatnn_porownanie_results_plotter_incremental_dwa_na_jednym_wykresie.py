@@ -298,7 +298,14 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 print(f'Liczba przed "x": {speed_value}')
             else:
                 print('Nie znaleziono liczby po "speed".')
-            axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek, " + dataset + ", $x=" +  str(speed_value) + "$")
+
+            dataset_name = dataset
+            if dataset == "mnist_inc_20k_0.1x":
+                dataset_name = "$\\text{MNIST}_{\\text{inc}}$, $x=0,1$"
+            if dataset == "mnist_inc_20k_0.5x":
+                dataset_name = "$\\text{MNIST}_{\\text{inc}}$, $x=0,5$"
+
+            axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek, " + dataset_name)
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}
@@ -420,12 +427,12 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     #
     axes.set_xlabel(r"t")
     axes.legend()
-    # axes.set_ylim([70, 93])
+    axes.set_ylim(bottom=80)
     # axes[1].set_xlabel(r"t")
     # axes[2].set_xlabel(r"t")
 
     plt.tight_layout()
-    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/eatnn_{dataset}.pdf', format='pdf')
+    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/eatnn_{dataset}_jan_26.pdf', format='pdf')
     plt.show(block=False)
 
 

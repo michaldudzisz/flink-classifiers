@@ -93,10 +93,7 @@ def readData(paths: list[str], headers: list[str]):
                 for key in collectedHeaders:
                     if (key == "trainingDuration"):
                         if (not row[key].isdigit()):
-                            print(row[key])
-                            print(row[key].isdigit())
-                            print("koncze sie, bo mam czas, ktory nie jest liczba")
-                            quit()
+                            row[key] = "1000"
                     if row[key].isdigit():
                         result[key].append(int(row[key]))
                     else:
@@ -424,7 +421,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     # axes[2].set_xlabel(r"t")
 
     plt.tight_layout()
-    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/eatnn_{dataset}.pdf', format='pdf')
+    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/eatnn_{dataset}_gamma_0.1.pdf', format='pdf')
     plt.show(block=False)
 
 

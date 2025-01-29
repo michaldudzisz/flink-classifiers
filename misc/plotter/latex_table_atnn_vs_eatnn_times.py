@@ -15,7 +15,7 @@ def times_comparison(df: pd.DataFrame):
 \\begin{tabular}{ll|ccccc|ccccc}
 \\hline
 \\multicolumn{2}{c|}{\\textbf{Zbiór danych}} & \\multicolumn{5}{c|}{ATNN} & \\multicolumn{5}{c}{SEATNN} \\\\
- & \\tiny{\\makecell{parametr \\\\ szybkości \\\\ dryfu}}  & $d_\\text{warn}$ & $n_\\text{nodes}^{\\text{warn}}$ & $n_\\text{nodes}$ & $T_{\\text{train}}$ & $T_{\\text{overall}}$ & $d_\\text{warn}$ & $n_\\text{nodes}^{\\text{warn}}$ & $n_\\text{nodes}$ & $T_{\\text{train}}$ & $T_{\\text{overall}}$ \\\\
+ & \\tiny{\\makecell{parametr \\\\ szybkości \\\\ dryfu}}  & $\\bar{t}_\\text{warn}$ & $\\bar{n}_\\text{nodes}^{\\text{warn}}$ & $\\bar{n}_\\text{nodes}$ & $T_{\\text{train}}$ & $T_{\\text{overall}}$ & $\\bar{t}_\\text{warn}$ & $\\bar{n}_\\text{nodes}^{\\text{warn}}$ & $\\bar{n}_\\text{nodes}$ & $T_{\\text{train}}$ & $T_{\\text{overall}}$ \\\\
 
   & & $\\%$ & & & [s] & [s] & $\\%$ & & & [s] & [s] \\\\
  
