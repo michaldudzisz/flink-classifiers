@@ -20,6 +20,10 @@ import pprint
 
 from latex_table_atnn_eatnn_gammas import atnn_eatnn_gammas_accuracies_table
 from latex_table_atnn_vs_eatnn_times import times_comparison
+from latex_table_atnn_vs_eatnn_times_ratio import times_comparison_ratio
+from latex_table_cand_accuracies import cand_accuracies_table
+from latex_table_cand_sb import cand_sb_table
+from latex_table_cand_times import cand_times_table
 
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
@@ -169,20 +173,7 @@ def getClassifierResults(classifierParamsPath: str):
         # T_overall = (results["timestamp"][-1] - results["timestamp"][0])/1e9
 
 
-        df = pd.DataFrame.from_dict(results)
-        drift_warn_times = df[df['driftStatus'] == 'warn'].shape[0]
-        d_warn = drift_warn_times / df.shape[0] * 100
-
-        copied_nodes_trained_during_warn = df[df['driftStatus'] == 'warn']['clonedNodesToTrain'].sum()
-        empty_nodes_trained_during_warn = df[df['driftStatus'] == 'warn']['emptyNodesToTrain'].sum()
-        normal_nodes_trained_during_warn = df[df['driftStatus'] == 'warn']['normalNodesToTrain'].sum()
-        n_warn_nodes = (copied_nodes_trained_during_warn + empty_nodes_trained_during_warn + normal_nodes_trained_during_warn) / drift_warn_times
-        copied_nodes_to_train = df['clonedNodesToTrain'].sum()
-        empty_nodes_to_train = df['emptyNodesToTrain'].sum()
-        normal_nodes_to_train = df['normalNodesToTrain'].sum()
-        n_nodes = (copied_nodes_to_train + empty_nodes_to_train + normal_nodes_to_train) / df.shape[0]
-
-    return acc, T_train, T_overall, d_warn, n_warn_nodes, n_nodes
+    return acc, T_train, T_overall
 
 
 
@@ -215,15 +206,12 @@ if __name__ == "__main__":
                 classifierParamsPath = f"{classifierPath}/{classifierParams}"
                 print(f"params: {classifierParams}")
 
-                accuracy, T_train, T_overall, d_warn, n_warn_nodes, n_nodes = getClassifierResults(classifierParamsPath)
+                accuracy, T_train, T_overall = getClassifierResults(classifierParamsPath)
 
                 dataset_results[dataset][classifierType][classifierParams] = {}
                 dataset_results[dataset][classifierType][classifierParams]["acc"] = round(float(accuracy), 2)
                 dataset_results[dataset][classifierType][classifierParams]["time_train"] = round(float(T_train), 2)
                 dataset_results[dataset][classifierType][classifierParams]["time_overall"] = round(float(T_overall), 2)
-                dataset_results[dataset][classifierType][classifierParams]["d_warn"] = d_warn
-                dataset_results[dataset][classifierType][classifierParams]["n_warn_nodes"] = float(n_warn_nodes)
-                dataset_results[dataset][classifierType][classifierParams]["n_nodes"] = float(n_nodes)
 
     rows = []
     for dataset, methods in dataset_results.items():
@@ -235,6 +223,8 @@ if __name__ == "__main__":
                     'Method': method,
                     'Params': param_set,
                     'Accuracy': metrics['acc'],
+                    'Time Overall': metrics['time_overall'],
+                    'Time Train': metrics['time_train'],
                 }
                 rows.append(row)
 
@@ -246,16 +236,18 @@ if __name__ == "__main__":
     summary = df.groupby(["Dataset", "Method", "Params"]).mean(numeric_only=True).reset_index()
     print(tabulate(summary, headers='keys', tablefmt='grid'))
 
-    print_latex_table_acc = True
-    if print_latex_table_acc:
-        acc_latex_table = atnn_eatnn_gammas_accuracies_table(summary)
-        with open("misc/plotter/gamma_accuracy_comparison_table.tex", "w") as f:
+    print_latex_table = True
+    if print_latex_table:
+        acc_latex_table = cand_accuracies_table(summary)
+        with open("misc/plotter/cand_accuracy_comparison_table.tex", "w") as f:
             f.write(acc_latex_table)
-    #
-    # print_latex_table_times = False
-    # if print_latex_table_times:
-    #     acc_latex_table = times_comparison(summary)
-    #     with open("misc/plotter/times_comparison.tex", "w") as f:
-    #         f.write(acc_latex_table)
-    #
-    #
+
+    if print_latex_table:
+        acc_latex_table = cand_times_table(summary)
+        with open("misc/plotter/cand_times_comparison.tex", "w") as f:
+            f.write(acc_latex_table)
+
+    if print_latex_table:
+        acc_latex_table = cand_sb_table(summary)
+        with open("misc/plotter/cand_sb.tex", "w") as f:
+            f.write(acc_latex_table)

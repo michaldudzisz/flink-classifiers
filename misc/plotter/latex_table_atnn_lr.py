@@ -13,7 +13,7 @@ def atnn_lr_accuracy_comparison_table(df: pd.DataFrame):
 \\hline
 \\multicolumn{1}{c}{\\textbf{Zbiór danych}} & \multicolumn{6}{c}{\\textbf{Dokładność}} \\\\ 
  &  \\multicolumn{6}{c}{Początkowa szybkość uczenia $\\eta$} \\\\
- &   $1\\cdot10^{-1}$ & $1\\cdot10^{-2}$ & $2\\cdot10^{-2}$ & $5\\cdot10^{-2}$ & $1\\cdot10^{-3}$ & $1\\cdot10^{-4}$ \\\\
+ &   $1\\cdot10^{-1}$ & $5\\cdot10^{-2}$ & $2\\cdot10^{-2}$ & $1\\cdot10^{-2}$ & $1\\cdot10^{-3}$ & $1\\cdot10^{-4}$ \\\\
 \\hline
     """
 

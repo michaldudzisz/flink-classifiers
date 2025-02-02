@@ -10,7 +10,7 @@ def times_comparison(df: pd.DataFrame):
     caption = """
 \\begin{table}[!h]
 \\centering
-\\footnotesize
+\\scriptsize
 \\caption{Wyniki eksperymentów.}
 \\begin{tabular}{ll|ccccc|ccccc}
 \\hline
@@ -45,17 +45,15 @@ def times_comparison(df: pd.DataFrame):
 
 
 
-
-\\multirow{1}{*}{\\makecell{SEA\\textsubscript{inc}}} 
- & & --- & --- & --- & --- & --- & --- & --- & --- & --- & --- \\\\
-
-
 \\multirow{4}{*}{\\makecell{MNIST\\textsubscript{inc}}} 
  & $x=0,1$   & """ + d[5][0] + """ & """ + d[5][1] + """ & """ + d[5][2] + """ & """ + d[5][3] + """ & """ + d[5][4] + """ & """ + d[5][5] + """ & """ + d[5][6] + """ & """ + d[5][7] + """ & """ + d[5][8] + """ & """ + d[5][9] + """ \\\\
  & $x=0,5$   & """ + d[6][0] + """ & """ + d[6][1] + """ & """ + d[6][2] + """ & """ + d[6][3] + """ & """ + d[6][4] + """ & """ + d[6][5] + """ & """ + d[6][6] + """ & """ + d[6][7] + """ & """ + d[6][8] + """ & """ + d[6][9] + """ \\\\
  & $x=1$     & """ + d[7][0] + """ & """ + d[7][1] + """ & """ + d[7][2] + """ & """ + d[7][3] + """ & """ + d[7][4] + """ & """ + d[7][5] + """ & """ + d[7][6] + """ & """ + d[7][7] + """ & """ + d[7][8] + """ & """ + d[7][9] + """ \\\\
  & $x=2$     & """ + d[8][0] + """ & """ + d[8][1] + """ & """ + d[8][2] + """ & """ + d[8][3] + """ & """ + d[8][4] + """ & """ + d[8][5] + """ & """ + d[8][6] + """ & """ + d[8][7] + """ & """ + d[8][8] + """ & """ + d[8][9] + """ \\\\
-\\hline 
+
+
+\\multirow{1}{*}{\\makecell{fashion\\textsubscript{abr}}} 
+ & & """ + d[13][0] + """ & """ + d[13][1] + """ & """ + d[13][2] + """ & """ + d[13][3] + """ & """ + d[13][4] + """ & """ + d[13][5] + """ & """ + d[13][6] + """ & """ + d[13][7] + """ & """ + d[13][8] + """ & """ + d[13][9] + """ \\\\
 
 
 \\multirow{4}{*}{\\makecell{fashion\\textsubscript{inc}}} 
@@ -111,7 +109,7 @@ def __values_to_paste(data: dict) -> list[list]:
         "elec",
         "weather_norm",
         "covtype_norm",
-        "sea_abr",
+        "sea_abr_norm",
         # "sea_inc",
         "mnist_abrupt_atnn_like",
         "mnist_inc_20k_0.1x",
@@ -122,6 +120,7 @@ def __values_to_paste(data: dict) -> list[list]:
         "fashion_inc_20k_0.5x",
         "fashion_inc_20k_1x",
         "fashion_inc_20k_2x",
+        "fashion_abr",
     ]
 
     results = []

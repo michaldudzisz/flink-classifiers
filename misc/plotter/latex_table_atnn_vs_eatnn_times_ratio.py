@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def times_comparison(df: pd.DataFrame):
+def times_comparison_ratio(df: pd.DataFrame):
 
     printable_accuracies = __printable_accuracies(df)
     d = __values_to_paste(printable_accuracies)
@@ -10,7 +10,6 @@ def times_comparison(df: pd.DataFrame):
     caption = """
 \\begin{table}[!h]
 \\centering
-\\footnotesize
 \\caption{Wyniki eksperymentów.}
 \\begin{tabular}{ll|ccccc}
 \\hline
@@ -48,7 +47,11 @@ def times_comparison(df: pd.DataFrame):
  & $x=0,5$   & """ + d[6][0] + """ & """ + d[6][1] + """ & """ + d[6][2] + """ & """ + d[6][3] + """ & """ + d[6][4] + """ \\\\
  & $x=1$     & """ + d[7][0] + """ & """ + d[7][1] + """ & """ + d[7][2] + """ & """ + d[7][3] + """ & """ + d[7][4] + """ \\\\
  & $x=2$     & """ + d[8][0] + """ & """ + d[8][1] + """ & """ + d[8][2] + """ & """ + d[8][3] + """ & """ + d[8][4] + """ \\\\
-\\hline 
+
+
+\\multirow{1}{*}{\\makecell{fashion\\textsubscript{abr}}} 
+ & & """ + d[13][0] + """ & """ + d[13][1] + """ & """ + d[13][2] + """ & """ + d[13][3] + """ & """ + d[13][4] + """ \\\\
+
 
 
 \\multirow{4}{*}{\\makecell{fashion\\textsubscript{inc}}} 
@@ -99,7 +102,7 @@ def __values_to_paste(data: dict) -> list[list]:
         "elec",
         "weather_norm",
         "covtype_norm",
-        "sea_abr",
+        "sea_abr_norm",
         # "sea_inc",
         "mnist_abrupt_atnn_like",
         "mnist_inc_20k_0.1x",
@@ -110,6 +113,7 @@ def __values_to_paste(data: dict) -> list[list]:
         "fashion_inc_20k_0.5x",
         "fashion_inc_20k_1x",
         "fashion_inc_20k_2x",
+        "fashion_abr",
     ]
 
     results = []

@@ -69,7 +69,8 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         int predictedClass = IntStream.range(0, votesForEachClass.length).reduce((i, j) -> votesForEachClass[i] > votesForEachClass[j] ? i : j).getAsInt();
 
         samplesProcessed++;
-        System.out.println("i: " + samplesProcessed);
+        if (samplesProcessed % 1000 == 0)
+            System.out.println("i: " + samplesProcessed);
 
         ArrayList<Tuple2<String, Object>> performances = new ArrayList<>();
         performances.add(getBestMLPParams());
@@ -91,7 +92,8 @@ public class Cand extends BaseClassifierClassifyAndTrain {
     public void bootstrapTrainImplementation(Example example) {
         // we do the line below so that MOA's Cand can increment samplesSeen counter
         bootstrapSamplesProcessed++;
-        System.out.println("bi: " + bootstrapSamplesProcessed);
+        if (bootstrapSamplesProcessed % 1000 == 0)
+            System.out.println("bi: " + bootstrapSamplesProcessed);
         bootstrapCand.getVotesForInstance(mapExampleToInstance(example, datasetProperties));
         Instance moaInstance = mapExampleToInstance(example, datasetProperties);
         bootstrapCand.trainOnInstanceImpl(moaInstance);
@@ -156,6 +158,9 @@ public class Cand extends BaseClassifierClassifyAndTrain {
         cand.numberOfMLPsToTrainOption.setValue(params.mSize); // |M|
         cand.backPropLossThreshold.setValue(params.backpropagationThreshold); // Math.pow(10, 10);
         cand.numberOfInstancesToTrainAllMLPsAtStartOption.setValue(500); // 10% of elec
+        Random rand = new Random();
+        int n = rand.nextInt(10_000);
+        cand.djlRandomSeed.setValue(n);
 
         // output files
         if (params.votingStatsFile != null)

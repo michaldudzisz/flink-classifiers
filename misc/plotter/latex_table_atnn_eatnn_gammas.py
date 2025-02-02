@@ -8,7 +8,7 @@ def atnn_eatnn_gammas_accuracies_table(df: pd.DataFrame):
     caption = """
 \\begin{table}[!h]
 \\centering
-\\caption{Wyniki eksperymentów porównujących dokładności algorytm SEATNN dla różnych wartości parametru $gamma$. Pogrubioną czcionką zaznaczono większą dokładność dla danego zbioru danych.}
+\\caption{Wyniki eksperymentów porównujących dokładności algorytm SEATNN dla różnych wartości parametru $\\gamma$. Pogrubioną czcionką zaznaczono większą dokładność dla danego zbioru danych.}
 \\begin{tabular}{llcccc}
 \\hline
 \\multicolumn{2}{c}{\\textbf{Zbiór danych}} & \\multicolumn{4}{c}{\\textbf{Dokładność}} \\\\ 
@@ -37,14 +37,10 @@ def atnn_eatnn_gammas_accuracies_table(df: pd.DataFrame):
               printable_accuracies["covtype_norm"]["eatnn"].get("0.5", "-") + """ & """ + \
               printable_accuracies["covtype_norm"]["eatnn"].get("0.1", "-") + """ \\\\
 
-\\multirow{1}{*}{\\makecell{SEA\\textsubscript{abr}}} & & """ + printable_accuracies["sea_abr"].get("atnn", "-") + """ & """ + printable_accuracies["sea_abr"]["eatnn"].get("1.0", "-") + """ & """ + \
-              printable_accuracies["sea_abr"]["eatnn"].get("0.5", "-") + """ & """ + \
-              printable_accuracies["sea_abr"]["eatnn"].get("0.1", "-") + """ \\\\
+\\multirow{1}{*}{\\makecell{SEA\\textsubscript{abr}}} & & """ + printable_accuracies["sea_abr_norm"].get("atnn", "-") + """ & """ + printable_accuracies["sea_abr_norm"]["eatnn"].get("1.0", "-") + """ & """ + \
+              printable_accuracies["sea_abr_norm"]["eatnn"].get("0.5", "-") + """ & """ + \
+              printable_accuracies["sea_abr_norm"]["eatnn"].get("0.1", "-") + """ \\\\
 
-\\multirow{1}{*}{\\makecell{SEA\\textsubscript{inc}}} & & - & - & - & - \\\\
-
-
-\\multirow{1}{*}{\\makecell{MNIST}} & & & & & \\\\
 
 \\multirow{1}{*}{\\makecell{MNIST\\textsubscript{abr}}} & & """ + printable_accuracies["mnist_abrupt_atnn_like"].get("atnn", "-") + """ & """ + printable_accuracies["mnist_abrupt_atnn_like"]["eatnn"][
                   "1.0"] + """ & """ + printable_accuracies["mnist_abrupt_atnn_like"]["eatnn"].get("0.5", "-") + """ & """ + \
@@ -64,7 +60,10 @@ def atnn_eatnn_gammas_accuracies_table(df: pd.DataFrame):
               printable_accuracies["mnist_inc_20k_2x"]["eatnn"].get("0.5", "-")+ """ & """ + \
               printable_accuracies["mnist_inc_20k_2x"]["eatnn"].get("0.1", "-") + """ \\\\
 
-\\multirow{1}{*}{\\makecell{fashion}} & & & & \\\\
+\\multirow{1}{*}{\\makecell{fashion\\textsubscript{abr}}} & & """ + printable_accuracies["fashion_abr"].get("atnn", "-") + """ & """ + printable_accuracies["fashion_abr"]["eatnn"][
+                  "1.0"] + """ & """ + printable_accuracies["fashion_abr"]["eatnn"].get("0.5", "-") + """ & """ + \
+              printable_accuracies["fashion_abr"]["eatnn"].get("0.1", "-") + """ \\\\
+
 
 \\multirow{4}{*}{\\makecell{fashion\\textsubscript{inc}}} 
  & $x=0,1$ & """ + printable_accuracies["fashion_inc_40k_0.1x"].get("atnn", "-") + """ & """ + printable_accuracies["fashion_inc_40k_0.1x"]["eatnn"].get("1.0", "-") + """ & """ + \
@@ -120,14 +119,20 @@ def __printable_accuracies(df: pd.DataFrame) -> dict:
         printable_acc10 = "{:.2f}".format(acc10).replace(".", ",")
         if acc10 >= atnn_acc and acc10 >= acc05 and acc10 >= acc01:
             printable_acc10 = f"\\textbf{{{printable_acc10}}}"
+        if acc10 > atnn_acc:
+            printable_acc10 = f"{printable_acc10}\\textsuperscript" + "{" + "+" + "}"
 
         printable_acc05 = "{:.2f}".format(acc05).replace(".", ",")
         if acc05 >= atnn_acc and acc05 >= acc10 and acc05 >= acc01:
             printable_acc05 = f"\\textbf{{{printable_acc05}}}"
+        if acc05 > atnn_acc:
+            printable_acc05 = f"{printable_acc05}\\textsuperscript" + "{" + "+" + "}"
 
         printable_acc01 = "{:.2f}".format(acc01).replace(".", ",")
         if acc01 >= atnn_acc and acc01 >= acc10 and acc01 >= acc05:
             printable_acc01 = f"\\textbf{{{printable_acc01}}}"
+        if acc01 > atnn_acc:
+            printable_acc01 = f"{printable_acc01}\\textsuperscript" + "{" + "+" + "}"
 
         results[dataset]["atnn"] = printable_atnn_acc
         results[dataset]["eatnn"]["1.0"] = printable_acc10

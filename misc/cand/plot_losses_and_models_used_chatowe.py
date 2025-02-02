@@ -94,7 +94,7 @@ def make_charts(best_classifiers, losses):
 
     # Wykres dla kumulatywnych wystąpień klasyfikatorów
     for column in cumulative_counts.columns:
-        axs[0].plot(cumulative_counts.index, cumulative_counts[column], label=column, linewidth=1.5, color=colors[column])
+        axs[0].plot(cumulative_counts.index, cumulative_counts[column], label=column, linewidth=1, color=colors[column])
 
     axs[0].axvline(x=5_000,  color='black', linestyle=':', linewidth=1)
     axs[0].axvline(x=10_000, color='black', linestyle=':', linewidth=1)
@@ -114,7 +114,7 @@ def make_charts(best_classifiers, losses):
 
     # Wykres dla strat klasyfikatorów
     for column in losses.columns:
-        axs[1].plot(losses.index, losses[column], label=column, color=colors[column])
+        axs[1].plot(losses.index, losses[column], label=column, color=colors[column], linewidth=0.7)
 
     axs[1].axvline(x=5_000,  color='black', linestyle=':', linewidth=1)
     axs[1].axvline(x=10_000, color='black', linestyle=':', linewidth=1)
@@ -125,9 +125,10 @@ def make_charts(best_classifiers, losses):
     axs[1].set_title(f'Przebieg estymowanej funkcji straty dla poszczególnych klasyfikatorów')
     axs[1].set_xlabel(r'$t$')
     axs[1].set_yscale('log')
+    axs[1].set_ylabel('Estymowana wartość funkcji straty', fontsize=12)
     axs[1].set_ylim((0.18, 70))
     axs[1].set_xlim((0, 30_000))
-    axs[1].legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=6, fontsize=6)
+    axs[1].legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4, fontsize=12)
 
     plt.grid(alpha=0.4)
     plt.tight_layout()

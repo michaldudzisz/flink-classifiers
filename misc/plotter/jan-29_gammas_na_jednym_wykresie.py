@@ -45,10 +45,10 @@ def extractParams(classifierDir: str) -> dict[str, float]:
                 valueBeginIdx = i
                 break
 
-        print("classifierDir: " + classifierDir)
-        print("classifierRaw: " + classifierRaw)
-        print("key: " + classifierRaw[:(valueBeginIdx)])
-        print("value: " + classifierRaw[valueBeginIdx:])
+        # print("classifierDir: " + classifierDir)
+        # print("classifierRaw: " + classifierRaw)
+        # print("key: " + classifierRaw[:(valueBeginIdx)])
+        # print("value: " + classifierRaw[valueBeginIdx:])
         key = classifierRaw[:(valueBeginIdx)]
         value = float(classifierRaw[valueBeginIdx:])
         resultDict[key] = value
@@ -93,10 +93,11 @@ def readData(paths: list[str], headers: list[str]):
                 for key in collectedHeaders:
                     if (key == "trainingDuration"):
                         if (not row[key].isdigit()):
-                            print(row[key])
-                            print(row[key].isdigit())
-                            print("koncze sie, bo mam czas, ktory nie jest liczba")
-                            quit()
+                            row[key] = "1000"
+                            # print(row[key])
+                            # print(row[key].isdigit())
+                            # print("koncze sie, bo mam czas, ktory nie jest liczba")
+                            # quit()
                     if row[key].isdigit():
                         result[key].append(int(row[key]))
                     else:
@@ -205,6 +206,7 @@ def getBestClassifier(classifierPath: str):
     bestJobId = ""
 
     allResults = []
+    allClasifiers = []
 
     for classifierParamsRaw in os.listdir(classifierPath): # wchodze na poziom tych P10_M2
         classifierParamsPath = f"{classifierPath}/{classifierParamsRaw}"
@@ -234,7 +236,10 @@ def getBestClassifier(classifierPath: str):
                                trainingDuration + classificationDuration, trainingDuration,
                                classificationDuration))
 
-    return ClassifierResults(bestParams, classifierType, bestResults, bestHeaders, bestJobId), allResults
+
+            allClasifiers.append(ClassifierResults(classifierParams, classifierType, results, headers, resultJson["jobId"]))
+
+    return allClasifiers, allResults
 
 
 def plotWindowed(dataset: str, classifierResults: list[ClassifierResults], performanceType: str,
@@ -263,29 +268,39 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
          showDetections: bool = True, prefix: str = None, overridenTitle: str = None, overridenYLabel: str = None,
          overridenUnit: str = None, printSmall: bool = False,
          sampleNumberMapper: Callable[[np.ndarray], np.ndarray] = lambda x: x):
+    # if (dataset != "incremental_drift_synth_attr2_speed0.2_len20000" and dataset != "incremental_drift_synth_attr2_speed0.5_len20000"):
+    #     return
+
     if plot_printer_config.is_set() and printSmall is False:
         plt.figure(dpi=1200)
     else:
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(4, 5))
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5, 5))
 
     performanceTypeTranslated = translatePerformanceType(performanceType)
 
     # if overridenTitle:
     #     axes[0].set_title(overridenTitle)
     # else:
-    #     axes[0].set_title(title(dataset, prefix, performanceTypeTranslated, subtitle))
+    axes.set_title("Dokładność w oknie 500 próbek")
 
     if overridenUnit:
         unit = overridenUnit
     else:
         unit = getUnit(performanceType)
 
+    speed_value = 0
     for classifier in classifierResults:
         y = mapper(classifier.results[performanceType])
 
         if mode is None or mode == "sample":
+            print(f"classifier.params[\"gamma\"]: {classifier.params["gamma"]}")
             sampleNumbers = sampleNumberMapper(np.cumsum(np.ones_like(y)))
-            curve = axes[0].plot(sampleNumbers, y, label="dokładność")
+            if classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 1.0:
+                curve = axes.plot(sampleNumbers, y, label=r"$\gamma$=1")
+            if classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 0.5:
+                curve = axes.plot(sampleNumbers, y, label=r"$\gamma$=0,5")
+            if classifier.classifierType == "eatnn2" and classifier.params["gamma"] == 0.1:
+                curve = axes.plot(sampleNumbers, y, label=r"$\gamma$=0,1")
 
             match = re.search(r'([0-9]*\.?[0-9]+)x', dataset)
             if match:
@@ -293,103 +308,135 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 print(f'Liczba przed "x": {speed_value}')
             else:
                 print('Nie znaleziono liczby po "speed".')
-            axes[0].set_title(r"Dokładność w oknie 500 próbek, $x=" +  str(speed_value) + "$")
+            # axes.set_title(r"Dokładność klasyfikacji w oknie 500 próbek")
+            # axes.set_title(f"{dataset}")
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}
-            print(f"dataset: {dataset}")
-            for idx, driftStatus in enumerate(classifier.results["driftStatus"]):
-                if driftStatus == "new_detected":
-                    if not drift_status_already_added.get("new_detected", False):
-                        drift_status_already_added["new_detected"] = True
-                        axes[0].axvline(x=idx, color='#eb9834', linestyle=':', linewidth=1, label='nowe pojęcie')
-                    else:
-                        axes[0].axvline(x=idx, color='#eb9834', linestyle=':', linewidth=1)
-                if driftStatus == "new_detected_cloned":
-                    axes[0].axvline(x=idx, color='#eb34e1', linestyle=':', linewidth=1, label='new_detected_cloned')
-                if driftStatus == "new_detected_empty":
-                    axes[0].axvline(x=idx, color='#45bfa5', linestyle=':', linewidth=1, label='new_detected_empty')
-                if driftStatus == "current_evolving":
-                    axes[0].axvline(x=idx, color='#52ad36', linestyle=':', linewidth=1, label='current_evolving')
-                if driftStatus == "recurring":
-                    if not drift_status_already_added.get("recurring", False):
-                        axes[0].axvline(x=idx, color='#034efc', linestyle=':', linewidth=1, label='powracające pojęcie')
-                        drift_status_already_added["recurring"] = True
-                    else:
-                        axes[0].axvline(x=idx, color='#034efc', linestyle=':', linewidth=1)
+
+            color_blue = "#1f77b4"
+            color_orange = "#ff7f0e"
+            color_green = "#2ca02c"
+            color_red = "#d62728"
+            color_gray = "#7f7f7f"
+            color_brown = "#8c564b"
+            color_pink = "#e377c2"
 
 
-            # rysuj liczbe warstw na drugim wykresie
-            trunk_line = []
-            branch_line = []
-            for idx, input_string in enumerate(classifier.results["branchStructure"]):
-                # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
-                name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
-                pattern = r"([a-zA-Z]*)(\d+)"
-                matches = []
-                for pair in name_value_pairs:
-                    match = re.match(pattern, pair) # np 'allBranches4'
-                    if match:
-                        name = match.group(1)
-                        value = int(match.group(2))
-                        matches.append((name, value))
-                result = {name: int(value) for name, value in matches}
-                # print(result)
-                if result["activeBranch"] == 0:
-                    trunk_line.append(result["activeBranchDepth"])
-                else:
-                    trunk_line.append(result["growingPoint"])
-                branch_line.append(result["growingPoint"] + result["activeBranchDepth"])
+            # for idx, driftStatus in enumerate(classifier.results["driftStatus"]):
+            #     if driftStatus == "new_detected" and classifier.classifierType == "eatnn":
+            #         if not drift_status_already_added.get("new_detected", False):
+            #             drift_status_already_added["new_detected"] = True
+            #             axes.axvline(x=idx, color=color_blue, linestyle=':', linewidth=1.5, label='SEATNN: nowe pojęcie')
+            #         else:
+            #             axes.axvline(x=idx, color=color_blue, linestyle=':', linewidth=1.5)
+            #     if driftStatus == "new_detected" and classifier.classifierType == "atnn":
+            #         if not drift_status_already_added.get("new_detected", False):
+            #             drift_status_already_added["new_detected"] = True
+            #             axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5, label='ATNN: dodano pustą gałąź')
+            #         else:
+            #             axes.axvline(x=idx, color=color_brown, linestyle=':', linewidth=1.5)
+            #     if driftStatus == "new_detected_cloned":
+            #         if not drift_status_already_added.get("new_detected_cloned", False):
+            #             axes.axvline(x=idx, color=color_green, linestyle=':', linewidth=1.5, label='sklonowano aktywną gałąź')
+            #             drift_status_already_added["new_detected_cloned"] = True
+            #         else:
+            #             axes.axvline(x=idx, color=color_green, linestyle=':', linewidth=1.5)
+            #     if driftStatus == "new_detected_empty":
+            #         if not drift_status_already_added.get("new_detected_empty", False):
+            #             axes.axvline(x=idx, color=color_red, linestyle=':', linewidth=1.5, label='SEATNN: dodano pustą gałąź')
+            #             drift_status_already_added["new_detected_empty"] = True
+            #         else:
+            #             axes.axvline(x=idx, color=color_red, linestyle=':', linewidth=1.5)
+                # if driftStatus == "current_evolving":
+                #     if not drift_status_already_added.get("current_evolving", False):
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5, label='SEATNN: pozwolono ewoluować aktywnej gałęzi')
+                #         drift_status_already_added["current_evolving"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_gray, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "eatnn":
+                    # if not drift_status_already_added.get("recurring", False):
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5, label='SEATNN: powracające pojęcie')
+                    #     drift_status_already_added["recurring"] = True
+                    # else:
+                    #     axes.axvline(x=idx, color=color_orange, linestyle=':', linewidth=1.5)
+                # if driftStatus == "recurring" and classifier.classifierType == "atnn":
+                #     if not drift_status_already_added.get("recurring", False):
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5, label='ATNN: powracające pojęcie')
+                #         drift_status_already_added["recurring"] = True
+                #     else:
+                #         axes.axvline(x=idx, color=color_pink, linestyle=':', linewidth=1.5)
 
-            axes[1].plot(sampleNumbers, trunk_line[-len(sampleNumbers):], label="Aktywne węzły pnia")
-            axes[1].plot(sampleNumbers, branch_line[-len(sampleNumbers):], label="Wszystkie aktywne węzły")
-            axes[1].legend()
-            axes[1].set_ylim(bottom=0)
-            axes[1].set_title("Liczba wykorzystywanych węzłów w drzewie ATNN")
-
-            # rysuj straty
-            # active_line = []
-            # for idx, input_string in enumerate(classifier.results["branchStructure"]):
-            #     # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
-            #     name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
-            #     pattern = r"([a-zA-Z]*)(\d+(?:\.\d+)?)"
-            #     matches = []
-            #     for pair in name_value_pairs:
-            #         match = re.match(pattern, pair) # np 'allBranches4'
-            #         if match:
-            #             name = match.group(1)
-            #             value = float(match.group(2))
-            #             matches.append((name, value))
-            #     result = {name: float(value) for name, value in matches}
-            #     active_line.append(result["active"])
-            #
-            # axes[2].plot(sampleNumbers, active_line[-len(sampleNumbers):])
-            # axes[2].set_ylim(bottom=0)
-            # axes[2].set_ylim(top=1.0) # todo można to zmieniać
-            # axes[2].set_ylabel("Entropia krzyżowa")
-            # axes[2].set_title("Średnia wartość funkcji straty w oknie 50 próbek")
-            # # axes[2].set_yscale("log")
-            # axes[2].legend()
-
-
-    axes[0].legend()
-    if len(classifierResults) > 1:
-        axes[0].legend()
-
-    if overridenYLabel:
-        axes[0].set_ylabel(overridenYLabel)
-    else:
-        axes[0].set_ylabel(ylabel(performanceTypeTranslated, unit))
-
-    axes[0].set_xlabel(r"t")
-    axes[1].set_xlabel(r"t")
-    axes[0].set_ylim(bottom=80)
+    #
+    #         # rysuj liczbe warstw na drugim wykresie
+    #         trunk_line = []
+    #         branch_line = []
+    #         for idx, input_string in enumerate(classifier.results["branchStructure"]):
+    #             # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
+    #             name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
+    #             pattern = r"([a-zA-Z]*)(\d+)"
+    #             matches = []
+    #             for pair in name_value_pairs:
+    #                 match = re.match(pattern, pair) # np 'allBranches4'
+    #                 if match:
+    #                     name = match.group(1)
+    #                     value = int(match.group(2))
+    #                     matches.append((name, value))
+    #             result = {name: int(value) for name, value in matches}
+    #             # print(result)
+    #             if result["activeBranch"] == 0:
+    #                 trunk_line.append(result["activeBranchDepth"])
+    #             else:
+    #                 trunk_line.append(result["growingPoint"])
+    #             branch_line.append(result["growingPoint"] + result["activeBranchDepth"])
+    #
+    #         axes[1].plot(sampleNumbers, trunk_line[-len(sampleNumbers):], label="Węzły pnia")
+    #         axes[1].plot(sampleNumbers, branch_line[-len(sampleNumbers):], label="Wszystkie węzły")
+    #         axes[1].legend()
+    #         axes[1].set_ylim(bottom=0)
+    #         axes[1].set_title("Liczba wykorzystywanych węzłów w drzewie SEATNN")
+    #
+    #         # rysuj straty
+    #         active_line = []
+    #         for idx, input_string in enumerate(classifier.results["branchStructure"]):
+    #             # allBranches4_activeBranch3_growingPoint4_activeBranchDepth2
+    #             name_value_pairs = input_string.split("_") # ['allBranches4', 'activeBranch3', 'growingPoint4', 'activeBranchDepth2']
+    #             pattern = r"([a-zA-Z]*)(\d+(?:\.\d+)?)"
+    #             matches = []
+    #             for pair in name_value_pairs:
+    #                 match = re.match(pattern, pair) # np 'allBranches4'
+    #                 if match:
+    #                     name = match.group(1)
+    #                     value = float(match.group(2))
+    #                     matches.append((name, value))
+    #             result = {name: float(value) for name, value in matches}
+    #             active_line.append(result["active"])
+    #
+    #         axes[2].plot(sampleNumbers, active_line[-len(sampleNumbers):])
+    #         axes[2].set_ylim(bottom=0)
+    #         axes[2].set_ylim(top=0.85) # todo można to zmieniać
+    #         axes[2].set_ylabel("Entropia krzyżowa")
+    #         axes[2].set_title("Średnia wartość funkcji straty w oknie 50 próbek")
+    #         axes[2].legend()
+    #
+    #
+    # axes[0].legend()
+    # if len(classifierResults) > 1:
+    #     axes[0].legend()
+    #
+    # if overridenYLabel:
+    #     axes[0].set_ylabel(overridenYLabel)
+    # else:
+    #     axes[0].set_ylabel(ylabel(performanceTypeTranslated, unit))
+    #
+    axes.set_xlabel(r"t")
+    axes.legend()
+    # axes.set_ylim([70, 93])
+    # axes[1].set_xlabel(r"t")
     # axes[2].set_xlabel(r"t")
 
-    plt.savefig(
-        f'/Users/michal.dudzisz/Documents/mgr/img/generated/atnn_wolne_dryfy/atnn_dryf_inc_mnist_{speed_value}.pdf',
-        format='pdf')
     plt.tight_layout()
+    plt.savefig(f'/Users/michal.dudzisz/Documents/mgr/img/generated/seatnn_porownanie/eatnn_{dataset}.pdf', format='pdf')
     plt.show(block=False)
 
 
@@ -439,21 +486,24 @@ if __name__ == "__main__":
         for classifierType in os.listdir(datasetPath):
             classifierPath = f"{datasetPath}/{classifierType}"
 
-            bestClassifier, tmpResults = getBestClassifier(classifierPath)
-            bestClassifierResults.append(bestClassifier)
+            allClassifiers, tmpResults = getBestClassifier(classifierPath)
+            bestClassifierResults += allClassifiers
             allResults.extend(tmpResults)
 
         bestClassifierResults = sorted(bestClassifierResults, key=lambda classifier: classifier.accuracy(),
                                        reverse=True)
 
         allResults = sorted(allResults, key=lambda x: x[2], reverse=True)
+        print(f"dataset: {dataset}")
         print(tabulate(allResults, headers=["type", "params", "accuracy", "duration", "trainingDuration",
                                             "classificationDuration"]))
 
         plotComparison(dataset, bestClassifierResults, plot_printer_config)
-        dataset_results[dataset] = bestClassifierResults[0].results["accuracy"]
-
-    # print(tabulate(dataset_results, headers=["dataset", "accuracy"]))
+    #     dataset_results[dataset] = {}
+    #     dataset_results[dataset][bestClassifierResults[0].classifierType] = str(bestClassifierResults[0].accuracy())
+    #     dataset_results[dataset][bestClassifierResults[1].classifierType] = str(bestClassifierResults[1].accuracy())
+    #
+    # print(dataset_results)
     if not plot_printer_config.is_set():
         plt.show()
 

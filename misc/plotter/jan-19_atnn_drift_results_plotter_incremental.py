@@ -267,7 +267,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
     if plot_printer_config.is_set() and printSmall is False:
         plt.figure(dpi=1200)
     else:
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(6, 6))
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(4, 5))
 
     performanceTypeTranslated = translatePerformanceType(performanceType)
 
@@ -294,7 +294,7 @@ def plot(dataset: str, classifierResults: list[ClassifierResults], performanceTy
                 print(f'Liczba po "speed": {speed_value}')
             else:
                 print('Nie znaleziono liczby po "speed".')
-            axes[0].set_title(r"Dokładność klasyfikacji ATNN w oknie 500 próbek, $\mu_\text{końcowe}=" +  str(speed_value) + "$")
+            axes[0].set_title(r"Dokładność w oknie 500 próbek, $\mu_\text{końcowe}=" +  str(speed_value) + "$")
 
             # rysuj linie wykrytych dryfów
             drift_status_already_added = {}

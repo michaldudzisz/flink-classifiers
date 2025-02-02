@@ -18,8 +18,9 @@ from tabulate import tabulate
 
 import pprint
 
-from latex_table_eatnn_gammas import gamma_accuracy_comparison_table
+from latex_table_atnn_eatnn_gammas import atnn_eatnn_gammas_accuracies_table
 from latex_table_atnn_vs_eatnn_times import times_comparison
+from latex_table_atnn_vs_eatnn_times_ratio import times_comparison_ratio
 
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
@@ -81,30 +82,30 @@ def readData(paths: list[str], headers: list[str]):
     for tmp in collectedHeaders + [accuracyKey]:
         result[tmp] = []
 
+    count = 0
+    correct = 0
 
     for path in paths:
-        pass
-        # with open(path, "r") as file:
-        #     reader = csv.DictReader(file, fieldnames=headers)
+        with open(path, "r") as file:
+            reader = csv.DictReader(file, fieldnames=headers)
 
 
-            # prev_row = None
-            # for row in reader:
-            #     count = count + 1
-            #     if row["class"] == row["predicted"]:
-            #         correct = correct + 1
-            #
-            #     result[accuracyKey].append(100.0 * float(correct) / float(count))
-                # result[key].append(1)
-                # for key in collectedHeaders:
-                #     if row[key].isdigit():
-                #         result[key].append(int(row[key]))
-                #     elif key == "trainingDuration":
-                #         result[key].append(18_400_000) # jakieś przykładowe, żeby zakryć minusa, zginie w szumie
-                #     elif key == "classificationDuration":
-                #         result[key].append(18_400_000)  # jakieś przykładowe, żeby zakryć minusa, zginie w szumie
-                #     else:
-                #         result[key].append(row[key])
+            prev_row = None
+            for row in reader:
+                count = count + 1
+                if row["class"] == row["predicted"]:
+                    correct = correct + 1
+
+                result[accuracyKey].append(100.0 * float(correct) / float(count))
+                for key in collectedHeaders:
+                    if row[key].isdigit():
+                        result[key].append(int(row[key]))
+                    elif key == "trainingDuration":
+                        result[key].append(18_400_000) # jakieś przykładowe, żeby zakryć minusa, zginie w szumie
+                    elif key == "classificationDuration":
+                        result[key].append(18_400_000)  # jakieś przykładowe, żeby zakryć minusa, zginie w szumie
+                    else:
+                        result[key].append(row[key])
 
                 # prev_row = row
 
@@ -143,7 +144,8 @@ def readAllResults(classifierPath: str):
             chronologicalDataFilePaths = listOfExperimentFilePathsForParams(classifierParamsPath)
             results = readData(chronologicalDataFilePaths, headers)
 
-            allResults.append((classifierParams, classifierType))
+            allResults.append(
+                ClassifierResults(classifierParams, classifierType, results, headers, resultJson["jobId"]))
 
     return allResults
 
@@ -214,8 +216,15 @@ if __name__ == "__main__":
                 classifierParamsPath = f"{classifierPath}/{classifierParams}"
                 print(f"params: {classifierParams}")
 
+                accuracy, T_train, T_overall, d_warn, n_warn_nodes, n_nodes = getClassifierResults(classifierParamsPath)
+
                 dataset_results[dataset][classifierType][classifierParams] = {}
-                dataset_results[dataset][classifierType][classifierParams]["acc"] = 0.01
+                dataset_results[dataset][classifierType][classifierParams]["acc"] = round(float(accuracy), 2)
+                dataset_results[dataset][classifierType][classifierParams]["time_train"] = round(float(T_train), 2)
+                dataset_results[dataset][classifierType][classifierParams]["time_overall"] = round(float(T_overall), 2)
+                dataset_results[dataset][classifierType][classifierParams]["d_warn"] = d_warn
+                dataset_results[dataset][classifierType][classifierParams]["n_warn_nodes"] = float(n_warn_nodes)
+                dataset_results[dataset][classifierType][classifierParams]["n_nodes"] = float(n_nodes)
 
     rows = []
     for dataset, methods in dataset_results.items():
@@ -226,32 +235,35 @@ if __name__ == "__main__":
                     'Dataset': dataset,
                     'Method': method,
                     'Params': param_set,
-                    'Accuracy': 0.1
+                    'Accuracy': metrics['acc'],
+                    'Time Overall': metrics['time_overall'],
+                    'Time Train': metrics['time_train'],
+                    'Warn samples': metrics['d_warn'],
+                    'Warn nodes': metrics['n_warn_nodes'],
+                    'Overall nodes': metrics['n_nodes']
                 }
                 rows.append(row)
 
     df = pd.DataFrame(rows)
 
     # Reformatting and displaying the DataFrame using a standard Python print statement for simplicity
-    # print(tabulate(df, headers='keys', tablefmt='grid'))
-
-    counts = df.groupby(["Dataset", "Method", "Params"]).count().reset_index()
-    print(tabulate(counts, headers='keys', tablefmt='grid'))
-    quit()
+    print(tabulate(df, headers='keys', tablefmt='grid'))
 
     summary = df.groupby(["Dataset", "Method", "Params"]).mean(numeric_only=True).reset_index()
     print(tabulate(summary, headers='keys', tablefmt='grid'))
 
-    print_latex_table_acc = False
-    if print_latex_table_acc:
-        acc_latex_table = gamma_accuracy_comparison_table(summary)
+    print_latex_table = True
+    if print_latex_table:
+        acc_latex_table = atnn_eatnn_gammas_accuracies_table(summary)
         with open("misc/plotter/gamma_accuracy_comparison_table.tex", "w") as f:
             f.write(acc_latex_table)
-    #
-    # print_latex_table_times = False
-    # if print_latex_table_times:
-    #     acc_latex_table = times_comparison(summary)
-    #     with open("misc/plotter/times_comparison.tex", "w") as f:
-    #         f.write(acc_latex_table)
-    #
-    #
+
+    if print_latex_table:
+        acc_latex_table = times_comparison(summary)
+        with open("misc/plotter/times_comparison.tex", "w") as f:
+            f.write(acc_latex_table)
+
+    if print_latex_table:
+        acc_latex_table = times_comparison_ratio(summary)
+        with open("misc/plotter/times_comparison_ratios.tex", "w") as f:
+            f.write(acc_latex_table)

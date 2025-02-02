@@ -96,32 +96,70 @@ public class DataStreamJob {
 
 
         String[] datasets2 = {
-                "elec", // 1 min
-                "weather_norm", // 1 min
-                "covtype_norm", // 7 min
-                "sea_abr", // 2 min
-                "sea_inc", // 3 min
-                "mnist_abrupt_atnn_like", // 13 min
-                "mnist_inc_20k_0.1x", // 9 min
-                "mnist_inc_20k_0.5x", // 9 min
-                "mnist_inc_20k_1x", // 9 min
-                "mnist_inc_20k_2x", // 9 min
+//                "elec", // 1 min
+//                "weather_norm", // 1 min
+//                "covtype_norm", // 7 min
+//                "sea_abr", // 2 min
+//                "sea_inc", // 3 min
+//                "mnist_abrupt_atnn_like", // 13 min
+//                "mnist_inc_20k_0.1x", // 9 min
+//                "mnist_inc_20k_0.5x", // 9 min
+//                "mnist_inc_20k_1x", // 9 min
+//                "mnist_inc_20k_2x", // 9 min
         };
 
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 1; i < 3; i++) {
             List<CandClassifierParams> candParams2 = List.of(
-                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, 0.2, i),
-                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, 0.6, i),
-                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, 1.0, i)
+                    new CandClassifierParams(CandClassifierParams.PoolSize.P10, 10, 0.0, i),
+                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 30, 0.0, i),
+                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 6, 0.0, i),
+                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 8, 0.0, i),
+                    new CandClassifierParams(CandClassifierParams.PoolSize.P30, 10, 0.0, i)
             ); // 3h na wszystkie 3
             for (String d : datasets2) {
                 datasetPath = basePath + "/datasets/" + d + ".csv";
-                FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams2));
+//                FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, CandProcessFactory.cand(candParams2));
             }
         }
 
 
+
+        String[] datasets3 = {
+//                "elec", // 1 min
+//                "mnist_abrupt_atnn_like", // 13 min
+        };
+
+
+        for (int i = 5; i < 6; i++) {
+            List<AtnnClassifierParams> atnnParams = List.of(
+                // lr:
+//                new AtnnClassifierParams(1E-1, 256, 5000, 1.0, i),
+//                new AtnnClassifierParams(5E-2, 256, 5000, 1.0, i),
+//                new AtnnClassifierParams(2E-2, 256, 5000, 1.0, i),
+//                new AtnnClassifierParams(1E-2, 256, 5000, 1.0, i),
+//                new AtnnClassifierParams(1E-3, 256, 5000, 1.0, i),
+//                    new AtnnClassifierParams(1E-4, 256, 5000, 1.0, i),
+
+                // hls:
+//                new AtnnClassifierParams(2E-2, 32, 5000, 1.0, i),
+//                new AtnnClassifierParams(2E-2, 64, 5000, 1.0, i),
+//                new AtnnClassifierParams(2E-2, 128, 5000, 1.0, i),
+//                new AtnnClassifierParams(2E-2, 256, 5000, 1.0, i),
+                    new AtnnClassifierParams(2E-2, 512, 5000, 1.0, i), // todo <- za długi
+
+                // lambda:
+                new AtnnClassifierParams(2E-2, 256, 0, 1.0, i),
+                new AtnnClassifierParams(2E-2, 256, 50, 1.0, i),
+                new AtnnClassifierParams(2E-2, 256, 500, 1.0, i),
+//                new AtnnClassifierParams(2E-2, 256, 5000, 1.0, i),
+                new AtnnClassifierParams(2E-2, 256, 50000, 1.0, i)
+            ); // 3h na wszystkie 3
+            for (String d : datasets3) {
+                datasetPath = basePath + "/datasets/" + d + ".csv";
+//                FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+            }
+        }
 
 
 
@@ -159,22 +197,22 @@ public class DataStreamJob {
 //                "incremental_drift_synth_attr2_speed10.0_len20000",
 //        };
 
-
-        String[] artificialDatasets = {
-                "incremental_drift_synth_attr2_speed0.05_len20000",
-                "incremental_drift_synth_attr2_speed0.2_len20000",
-                "incremental_drift_synth_attr2_speed0.5_len20000",
-                "incremental_drift_synth_attr2_speed1.0_len20000",
-                "incremental_drift_synth_attr2_speed2.0_len20000",
-                "incremental_drift_synth_attr2_speed5.0_len20000",
-                "incremental_drift_synth_attr2_speed10.0_len20000",
-                "gradual_drift_synth_attr2_a50_len20000",
-                "gradual_drift_synth_attr2_a200_len20000",
-                "gradual_drift_synth_attr2_a500_len20000",
-                "gradual_drift_synth_attr2_a1000_len20000",
-                "gradual_drift_synth_attr2_a1500_len20000",
-                "gradual_drift_synth_attr2_a2000_len20000",
-        };
+//
+//        String[] artificialDatasets = {
+//                "incremental_drift_synth_attr2_speed0.05_len20000",
+//                "incremental_drift_synth_attr2_speed0.2_len20000",
+//                "incremental_drift_synth_attr2_speed0.5_len20000",
+//                "incremental_drift_synth_attr2_speed1.0_len20000",
+//                "incremental_drift_synth_attr2_speed2.0_len20000",
+//                "incremental_drift_synth_attr2_speed5.0_len20000",
+//                "incremental_drift_synth_attr2_speed10.0_len20000",
+//                "gradual_drift_synth_attr2_a50_len20000",
+//                "gradual_drift_synth_attr2_a200_len20000",
+//                "gradual_drift_synth_attr2_a500_len20000",
+//                "gradual_drift_synth_attr2_a1000_len20000",
+//                "gradual_drift_synth_attr2_a1500_len20000",
+//                "gradual_drift_synth_attr2_a2000_len20000",
+//        };
 //
 //        List<AtnnClassifierParams> atnnParams = List.of(
 //                new AtnnClassifierParams(2E-2, 256, 5000, 0)
@@ -189,7 +227,36 @@ public class DataStreamJob {
 //        }
 
 
+        String[] datasets5 = {
+//                "elec", // 1 min
+//                "weather_norm", // 1 min
+//                "covtype_norm", // 7 min
+                "sea_abr_norm", // 2 min
+                "fashion_abr"
+//                "sea_inc", // 3 min
+//                "mnist_abrupt_atnn_like", // 13 min
+//                "mnist_inc_20k_0.1x", // 9 min
+//                "mnist_inc_20k_0.5x", // 9 min
+//                "mnist_inc_20k_1x", // 9 min
+//                "mnist_inc_20k_2x", // 9 min
+        };
 
+
+        for (int i = 0; i < 5; i++) {
+            for (String d : datasets5) {
+                List<AtnnClassifierParams> eatnnParams = List.of(
+                        new AtnnClassifierParams(2E-2, 256, 5000, 1.0, i),
+                        new AtnnClassifierParams(2E-2, 256, 5000, 0.5, i),
+                        new AtnnClassifierParams(2E-2, 256, 5000, 0.1, i)
+                );
+                List<AtnnClassifierParams> atnnParams = List.of(
+                        new AtnnClassifierParams(2E-2, 256, 5000, 1.0, i)
+                ); // 3h na wszystkie 3            for (String d : datasets5) {
+                datasetPath = basePath + "/datasets/" + d + ".csv";
+                FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, AtnnProcessFactory.atnn(atnnParams));
+                FlinkProcessFactory.runJobs(datasetPath, bootstrapSamplesLimit, EAtnn2ProcessFactory.eatnn2(eatnnParams));
+            }
+        }
 
 
     }
